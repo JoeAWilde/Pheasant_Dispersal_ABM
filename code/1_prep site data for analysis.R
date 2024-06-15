@@ -57,7 +57,7 @@ hab_pb <- merge(pb_rast, hab)
 writeRaster(hab_pb, "outputs/script_1/ATLAS outputs/cropped release pen habitat raster.tif", overwrite = T)
 
 
-## Hedges shapefile ####
+## Hedges ####
 
 ### load in and crop hedgerow data ####
 hedges <- st_read("data/Woody_LinearFeatures/NorthWyke_LinearFeatures.shp") %>%
@@ -65,7 +65,7 @@ hedges <- st_read("data/Woody_LinearFeatures/NorthWyke_LinearFeatures.shp") %>%
   st_crop(x = ., y = ext)
 
 ### save cropped hedgerow shapefile ####
-st_write(hedges, "outputs/script_1/ATLAS outputs/cropped hedgerow shapefile.shp")
+st_write(hedges, "outputs/script_1/ATLAS outputs/cropped hedgerow shapefile.shp", append = F)
 
 ### create a raster of distance to nearest hedgerow ####
 hedges_dist <- terra::distance(hab, hedges)
@@ -111,7 +111,7 @@ writeRaster(feed_dist, "outputs/script_1/ATLAS outputs/cropped feeder distance r
 
 #APHA data ####
 
-# for(ss in c("A", "B", "D")) {
+for(ss in c("A", "B", "D")) {
   ## Release pen ####
 
   ### load in the release pen and convert to a closed shape ####
@@ -142,6 +142,95 @@ writeRaster(feed_dist, "outputs/script_1/ATLAS outputs/cropped feeder distance r
               "/Site ", ss, " Land Use Raster.tif")) %>%
     subset(., 1) %>%
     crop(., buffer(cen_pen, width = 10000)) %>%
-    LC_to_AC(.)
+    LC_to_AC(.) %>%
+    `crs<-`(CRS_used)
   
-#}
+  ### save the cropped habitat raster ####
+  writeRaster(hab, paste0("outputs/script_1/APHA outputs/site ", ss,
+                          "/site ", ss, " cropped habitat raster.tif"), overwrite = T)
+  
+  ### extract the extent of the cropped habitat raster to use for other data ####
+  ext <- as.polygons(hab, extent=T) %>%
+    st_as_sf(.)
+  
+  
+  ## Distance to release pen ####
+  
+  ### create a raster of distance to release pen and save ####
+  pen_dist <- distance(hab, pen)
+  writeRaster(pen_dist, paste0("outputs/script_1/APHA outputs/site ", ss,
+                               "/site ", ss, " cropped pen distance raster.tif"), overwrite = T)
+  
+  
+  ## Release woodland ####
+  
+  ### create a buffer around the release pen as vect and raster ####
+  pen_buffer <- buffer(vect(pen), width = 250)
+  pb_rast <- rasterize(pen_buffer, hab, res = 1000) %>%
+    ifel(. == 1, 33, .) #note: release area is marked as value 33
+  
+  ### merge pen buffer into the habitat raster and save ####
+  hab_pb <- merge(pb_rast, hab)
+  writeRaster(hab_pb, paste0("outputs/script_1/APHA outputs/site ", ss,
+                             "/site ", ss, " cropped release pen habitat raster.tif"), overwrite = T)
+  
+  
+  ## Hedges ####
+  
+  ### load in and crop hedgerow data ####
+  hedges <- readRDS(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ", ss,
+                                     "/Site ", ss, " Hedgerow Data.rds")) %>%
+    st_multilinestring(.) %>%
+    vect(.) 
+  
+  crs(hedges) <- CRS_used
+  
+  ### save cropped hedgerow shapefile ####
+  st_write(st_as_sf(hedges), paste0("outputs/script_1/APHA outputs/site ", ss,
+                          "/site ", ss, " cropped hedgerow shapefile.shp"), append = F)
+  
+  ### create a raster of distance to nearest hedgerow ####
+  hedges_dist <- terra::distance(hab, hedges)
+  
+  ### save the distance to hedgerows raster ####
+  writeRaster(hedges_dist, paste0("outputs/script_1/APHA outputs/site ", ss,
+                                  "/site ", ss, " cropped hedgerow distance raster.tif"), overwrite = T)
+ 
+  
+  ## Hedges and edges ####
+  
+  ### extract just the woodland from hab ####
+  wood_rast <- ifel(hab %in% 1:2, 1, NA)
+  
+  ### extract and save distance to woodland raster ####
+  wood_dist <- distance(wood_rast)
+  writeRaster(wood_dist, paste0("outputs/script_1/APHA outputs/site ", ss,
+                                "/site ", ss, " cropped wood distance raster.tif"), overwrite = T)
+  
+  ### convert the hedges shapefile into a raster ####
+  hedges_rast <- rasterize(hedges, hab, res = 1000)
+  
+  ### merge the hedges and woodland to make hedges and edges and save ####
+  hedges_edges_rast <- merge(wood_rast, hedges_rast)
+  writeRaster(hedges_edges_rast, paste0("outputs/script_1/APHA outputs/site ", ss,
+                                        "/site ", ss, " cropped hedges_edges raster.tif"), overwrite = T)
+  
+  ### create a raster of the distance to hedges and edges and save####
+  he_dist <- distance(hedges_edges_rast)
+  writeRaster(he_dist, paste0("outputs/script_1/APHA outputs/site ", ss,
+                              "/site ", ss, " cropped hedges_edges distance raster.tif"), overwrite = T)
+  
+  
+  ## Feeders ####
+  
+  ### load in the feeder points and convert to shapefile ####
+  feeders <- read.table(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ",
+                               ss, "/Site ", ss, " Hopper_Feeder Location Data.csv"),
+                        sep = ",", header = T) %>%
+    st_as_sf(., coords = c("X", "Y"), crs = CRS_used)
+  
+  ### create a raster of distance to feeders and save ####
+  feed_dist <- distance(hab, feeders)
+  writeRaster(feed_dist, paste0("outputs/script_1/APHA outputs/site ", ss,
+                                "/site ", ss, " cropped feeder distance raster.tif"), overwrite = T)
+}
