@@ -1,0 +1,132 @@
+id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
+                   dogin_prob, dogin_buffer, dogin_outside_edge, covs, Autmort, Wintmort, Springmort, 
+                   st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
+                   hedges_edges, hedges_edges_dist) {
+  require(tidyverse)
+  require(sf)
+  require(hms)
+  require(Rfast)
+  require(boot)
+  
+  if(short_list) {
+    urban_value <- 10
+  } else {
+    urban_value <- 20
+  }
+  
+  df_id <- data.frame(
+    id = rep_len(id, n_steps), 
+    x = rep_len(0, n_steps), 
+    y = rep_len(0, n_steps), 
+    absta = rep_len(0, n_steps), 
+    ta_ = rep_len(0, n_steps), 
+    sl_ = rep_len(0, n_steps), 
+    BoundaryHit = rep_len(F, n_steps), 
+    DateTime = seq(from = st_date, 
+                   to = st_date + minutes(fix_rate * (n_steps - 1)), 
+                   length.out = n_steps), 
+    SinceRel = seq(0, (n_steps - 1) * fix_rate, fix_rate), 
+    DayNight = rep_len(0, n_steps), 
+    DogIn = rep_len(F, n_steps), 
+    BirdDead = rep_len(0, n_steps)
+    ) %>%
+    mutate(
+      DateTime = if_else(format(DateTime, "%H:%M:%S") == "00:00:00", DateTime + seconds(1), DateTime), 
+      DaysSinceRel = SinceRel / 1440, 
+      DogIn = if_else(
+        date(DateTime) %in% dogin_dates & 
+          (as_hms(format(ymd_hms(DateTime), format = "%H:%M:%S")) >= dogin_times[1] & 
+             as_hms(format(ymd_hms(DateTime), format = "%H:%M:%S")) <= dogin_times[2]), 
+        TRUE, FALSE), 
+      DayNight = if_else((DateTime >= suntimes$sunset & 
+                            as_hms(DateTime) <= as_hms("23:59:59")) | 
+                           (as_hms(DateTime) >= as_hms("00:00:00") &
+                              DateTime <= suntimes$sunrise), 
+                         "NIGHT",
+                         "DAY")
+    )
+  
+  st_point <- st_sample(pen_pts, 1)
+  df_id$x[1] <- st_coordinates(st_point)[, 1]
+  df_id$y[1] <- st_coordinates(st_point)[, 2]
+  
+  is_within_raster <- T
+
+  for(t in 2 : n_steps) {
+    if(date(df_id$DateTime[t]) != date(df_id$DateTime[t - 1])) {
+      if(date(df_id$DateTime[t]) %in% Autmort$Autdays) {
+        death_prob <- Autmort$Autdaily
+      } else if(date(df_id$DateTime[t]) %in% Wintmort$Wintdays) {
+        death_prob <- Wintmort$Wintdaily
+      } else if(date(df_id$DateTime[t]) %in% Springmort$Springdays) {
+        death_prob <- Springmort$Springdaily
+      }
+      
+      bird_dead <- sample(c(T, F), 1, prob = c(death_prob, 1 - death_prob))
+      
+      if(bird_dead | df_id$BoundaryHit[t-1]) {
+        df_id$BirdDead[t : nrow(df_id)] <- 1
+        break
+      }
+    }
+    
+    prev_point <- st_sfc(st_point(c(df_id$x[t - 1], df_id$y[t - 1])), crs = st_crs(dogin_buffer))
+    in_buffer <- st_intersects(prev_point, dogin_buffer, sparse = F)[1, 1]
+    
+    if(df_id$DogIn[t] & in_buffer) {
+      dog_into_pen <- sample(c(T, F), 1, prob = c(dogin_prob, 1 - dogin_prob))
+      
+      if(dog_into_pen) {
+        point_t <- st_sample(pen_pts, 1)
+      } else {
+        point_t <- st_nearest_points(prev_point, dogin_outside_edge)
+      }
+    } else {
+      if(df_id$DayNight[t] == "NIGHT") {
+        in_woods_value <- extract(hedges_edges, as.matrix(cbind(df_id$x[t - 1], df_id$y[t - 1])))[1, 1]
+        in_woods_value <- ifelse(is.na(in_woods_value), 0, 1)
+        
+        in_woods <- ifelse(in_woods_value == 1, TRUE, FALSE)
+        
+        if(in_woods) {
+          df_id$x[t] <- df_id$x[t - 1]
+          df_id$y[t] <- df_id$y[t - 1]
+        } else {
+          control_steps_df <- data.frame(
+            sl_ = rgamma(n_csteps, sl_pars$Gam_shape, sl_pars$Gam_shape / sl_pars$Intercept), 
+            ta_ = as.numeric(rvonmises(n_csteps, ta_pars$vm_mu, ta_pars$vm_kappa))) %>%
+              mutate(absta_ = (ta_ + df_id$absta[t - 1]) %% (2 * pi), 
+                     x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
+                     y = df_id$y[t - 1] + (sl_ * sin(absta_)), 
+                     hedge_edge_dist = extract(hedges_edges_dist,
+                                               as.matrix(cbind(control_steps_df$x, control_steps_df$y)))[, 1])
+          
+          minimum_hedge_indices <- which(control_steps_df$hedge_edge_dist == min(control_steps_df$hedge_edge_dist))
+          
+          if(length(minimum_hedge_indices) > 1) {
+            selected_index <- sample(minimum_hedge_indices, 1)
+          } else {
+            selected_index <- minimum_hedge_indices[1]
+          }
+          
+          df_id$x[t] <- control_steps_df$x[selected_index]
+          df_id$y[t] <- control_steps_df$y[selected_index]
+          df_id$absta_[t] <- control_steps_df$absta_[selected_index]
+          df_id$ta_[t] <- control_steps_df$ta_[selected_index]
+          df_id$sl_[t] <- control_steps_df$sl_[selected_index]
+          
+          if(any(is.na(df_id[t,]))) {
+            in_within_raster <- F
+          }
+          
+          if(!is_within_raster) {
+            df_id$BoundaryHit[t] <- T
+          }
+        }
+      } else {
+        
+      }
+    }
+  }
+  
+}
