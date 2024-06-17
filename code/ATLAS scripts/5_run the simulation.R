@@ -112,7 +112,7 @@ progress <- function(n) {
 opts <- list(progress = progress)
 
 # Simulation loop ####
-foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
+# foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
   ## reload required packages for each worker ####
   require(tidyverse)
   require(terra)
