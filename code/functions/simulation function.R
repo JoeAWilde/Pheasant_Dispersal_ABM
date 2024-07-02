@@ -16,7 +16,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
   
   hab_betas <- ssf_betas[which(grepl("HAB", toupper(names(ssf_betas))))]
   
-  names(hab_betas) <- substr(names(hab_betas), 4, 5)
+  names(hab_betas) <- substr(names(hab_betas), 9, 11)
   
   feed_index <- which(grepl("FEED", toupper(names(ssf_betas))))
   pen_index <- which(grepl("PEN", toupper(names(ssf_betas))) & 
@@ -42,7 +42,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
     DayNight = rep_len(0, n_steps), 
     DogIn = rep_len(F, n_steps), 
     BirdDead = rep_len(0, n_steps)
-    ) %>%
+  ) %>%
     mutate(
       DateTime = if_else(format(DateTime, "%H:%M:%S") == "00:00:00", DateTime + seconds(1), DateTime), 
       DaysSinceRel = SinceRel / 1440, 
@@ -94,6 +94,15 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
       } else {
         point_t <- st_nearest_points(prev_point, dogin_outside_edge)
       }
+      
+      
+      
+      df_id$x[t] <- st_coordinates(point_t)[1, 1]
+      df_id$y[t] <- st_coordinates(point_t)[1, 2]
+      df_id$absta[t] <- atan2(df_id$y[t] - df_id$y[t-1], df_id$x[t] - df_id$x[t-1])
+      df_id$ta_[t] <- atan2(df_id$y[t] - df_id$y[t-1], df_id$x[t] - df_id$x[t-1]) - df_id$ta_[t-1]
+      df_id$sl_[t] <- sqrt(((df_id$x[t] - df_id$x[t - 1])^2) + ((df_id$y[t] - df_id$y[t - 1])^2))
+      
     } else {
       if(df_id$DayNight[t] == "NIGHT") {
         in_woods_value <- extract(hedges_edges, as.matrix(cbind(df_id$x[t - 1], df_id$y[t - 1])))[1, 1]
@@ -108,11 +117,11 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
           control_steps_df <- data.frame(
             sl_ = rgamma(n_csteps, sl_pars$Gam_shape, sl_pars$Gam_shape / sl_pars$Intercept), 
             ta_ = as.numeric(rvonmises(n_csteps, ta_pars$vm_mu, ta_pars$vm_kappa))) %>%
-              mutate(absta_ = (ta_ + df_id$absta[t - 1]) %% (2 * pi), 
-                     x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
-                     y = df_id$y[t - 1] + (sl_ * sin(absta_)), 
-                     hedge_edge_dist = extract(hedges_edges_dist,
-                                               as.matrix(cbind(control_steps_df$x, control_steps_df$y)))[, 1])
+            mutate(absta_ = (ta_ + df_id$absta[t - 1]) %% (2 * pi), 
+                   x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
+                   y = df_id$y[t - 1] + (sl_ * sin(absta_))) %>%
+            mutate(hedge_edge_dist = extract(hedges_edges_dist,
+                                             as.matrix(cbind(.$x, .$y)))[, 1])
           
           minimum_hedge_indices <- which(control_steps_df$hedge_edge_dist == min(control_steps_df$hedge_edge_dist))
           
@@ -137,17 +146,17 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
           }
         }
       } else {
-        gam_eta <- sl_pars$Intercept + 
-            sl_pars$Time_beta * df_id$DaysSinceRel[t]
+        gam_eta <- sl_pars$Intercept# + 
+        # sl_pars$Time_beta * df_id$DaysSinceRel[t]
         
-        current_hab <- extract(covs[[2]], as.matrix(cbind(df_id$x[t-1], df_id$y[t-1])))[1, 1]
-        
-        in_woods <- current_hab == 1
-        
-        if(!in_woods) {
-          current_hab_index <- which(current_hab == sl_pars$Hab_values)
-          gam_eta <- gam_eta + sl_pars$Hab_betas[current_hab_index]
-        }
+        # current_hab <- extract(covs[[2]], as.matrix(cbind(df_id$x[t-1], df_id$y[t-1])))[1, 1]
+        # 
+        # in_woods <- current_hab == 10
+        # 
+        # if(!in_woods) {
+        #   current_hab_index <- which(current_hab == sl_pars$Hab_values)
+        #   gam_eta <- gam_eta + sl_pars$Hab_betas[current_hab_index]
+        # }
         
         gam_mu <- exp(gam_eta)
         
@@ -159,7 +168,10 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
                  y = df_id$y[t - 1] + (sl_ * sin(absta_))) %>%
           cbind(., terra::extract(covs, cbind(.$x, .$y))) %>%
           na.omit()
-        
+        if(nrow(control_steps_df) == 0) {
+          df_id$BoundaryHit[t] <- T
+          break
+        }
         names(control_steps_df)[6:9] <- c("feed", "hab", "wood", "pen")
         
         control_steps_df <- control_steps_df %>%
@@ -171,7 +183,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
                    pen * df_id$DaysSinceRel[t] * ssf_betas[int_index])
         
         for(i in 1 : nrow(control_steps_df)) {
-          if(as.character(control_steps_df$hab[i]) != 1) {
+          if(as.character(control_steps_df$hab[i]) != 10) {
             control_steps_df$log_step_weight[i] <- control_steps_df$log_step_weight[i] + 
               hab_betas[which(as.character(control_steps_df$hab[i]) == names(hab_betas))]
           }
@@ -199,14 +211,15 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
     }
   }
   
+  
   dead_index <- which(df_id$birddead == 1 | df_id$BoundaryHit == T)[1]
   
   if(length(dead_index) > 0 & !is.na(dead_index)) {
     df_id <- df_id[1:(dead_index-1), ]
   }
+  
+  df_id <- subset(df_id, BirdDead != 1)
   return(df_id)
 }
 
-ggplot() + 
-  tidyterra::geom_spatraster(data = as.factor(hab)) + 
-  geom_path(data = df_id[df_id$x != 0,], aes(x = x, y = y))
+

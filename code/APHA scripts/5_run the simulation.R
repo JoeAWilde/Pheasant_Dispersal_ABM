@@ -10,8 +10,7 @@ library(progress)
 
 source("code/functions/simulation function.R")
 
-# set the CRS used ####
-CRS_used <- "EPSG::27700"
+sites <- c("A", "B", "D")
 
 # Step length and turning angle regression ####
 
@@ -45,7 +44,7 @@ cov_names <- names(ssf_betas)
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 1000
+n_IDS <- 100
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + years(1), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
@@ -97,62 +96,78 @@ Springmort <- list(
 Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)) # probability and individual dies on a day
 
 
-## load in release pen ####
-pen_pts <- st_read("data/ReleasePen/ReleasePen2.shp")
 
-## create the area where dogging in occurs ####
-dogin_buffer <- st_difference(st_buffer(st_geometry(pen_pts), dist = 200), pen_pts)
-dogin_outside_edge <- st_boundary(st_buffer(st_geometry(pen_pts), dist = 200))
 
-# Parallel processing set up ####
-## create cluster of cores ####
-cl <- makeCluster(parallel::detectCores(logical = F)-2, type = "SOCK")
-registerDoSNOW(cl)
-
-##create progress bar for simulation loop ####
-pb <- progress_bar$new(
-  format = "ID = :ID [:bar] :percent | :elapsed | eta::eta", 
-  total = n_IDS, 
-  clear = F
-)
-
-ID_list <- 1:n_IDS
-
-progress <- function(n) {
-  pb$tick(tokens = list(ID = ID_list[n]))
+for(ss in sites){
+  # Parallel processing set up ####
+  ## create cluster of cores ####
+  cl <- makeCluster(parallel::detectCores(logical = F)-2, type = "SOCK")
+  registerDoSNOW(cl)
+  
+  ##create progress bar for simulation loop ####
+  pb <- progress_bar$new(
+    format = "ID = :ID [:bar] :percent | :elapsed | eta::eta", 
+    total = n_IDS, 
+    clear = F
+  )
+  
+  ID_list <- 1:n_IDS
+  
+  progress <- function(n) {
+    pb$tick(tokens = list(ID = ID_list[n]))
+  }
+  
+  opts <- list(progress = progress)
+  # Simulation loop ####
+  foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
+    ## reload required packages for each worker ####
+    require(tidyverse)
+    require(terra)
+    require(sf)
+    
+    pen <- read.table(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ", ss,
+                             "/Site ", ss, "_Release Pen Coordinate data.csv"),
+                      sep = ",", header = TRUE) %>%
+      dplyr::select(X, Y)
+    # Ensure the loop is closed
+    if(any(pen[nrow(pen), ] != pen[1, ])) {
+      pen <- rbind(pen, pen[1, ])
+    }
+    # Convert to sf, specifying the CRS if known
+    pen_sf <- st_as_sf(pen, coords = c("X", "Y"), crs = CRS_used)
+    # Convert to LINESTRING
+    pen_line <- st_sfc(st_linestring(as.matrix(pen)), crs = CRS_used)
+    pen_pts <- vect(st_cast(pen_line, "POLYGON", crs = CRS_used)) %>%
+      st_as_sf()
+    
+    ## create the area where dogging in occurs ####
+    dogin_buffer <- st_difference(st_buffer(st_geometry(pen_pts), dist = 200), pen_pts)
+    dogin_outside_edge <- st_boundary(st_buffer(st_geometry(pen_pts), dist = 200))
+    
+    ## load in covariate rasters (can't be passed to workers) ####
+    short_list <- T
+    hab <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped habitat raster.tif"))
+    pen <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped pen distance raster.tif"))
+    feed <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped feeder distance raster.tif"))
+    wood <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped wood distance raster.tif"))
+    
+    ## bind all covariate rasters together ####
+    covs <- c(feed, hab, wood, pen)
+    
+    ## load in the hedges and egdes rasters ####
+    hedges_edges <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped hedges_edges raster.tif"))
+    hedges_edges_dist <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped hedges_edges distance raster.tif"))
+    
+    
+    ## start the simulation ####
+    sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
+                     dogin_prob, dogin_buffer, dogin_outside_edge, covs, Autmort, Wintmort, Springmort, 
+                     st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
+                     hedges_edges, hedges_edges_dist)
+    
+    ## save the simulation ####
+    saveRDS(sim_df, paste0("outputs/script_5/APHA output/site ",
+                           ss, "/", id, "_sim_output_site_", ss, ".rds"))
+    rm(sim_df)
+  }; stopCluster(cl)
 }
-
-opts <- list(progress = progress)
-
-# Simulation loop ####
-foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
-  ## reload required packages for each worker ####
-  require(tidyverse)
-  require(terra)
-  require(sf)
-  
-  ## load in covariate rasters (can't be passed to workers) ####
-  short_list <- T
-  hab <- rast("outputs/script_4/ATLAS outputs/cropped habitat raster.tif")
-  pen <- rast("outputs/script_4/ATLAS outputs/cropped pen distance raster.tif")
-  feed <- rast("outputs/script_4/ATLAS outputs/cropped feeder distance raster.tif")
-  wood <- rast("outputs/script_4/ATLAS outputs/cropped wood distance raster.tif")
-  
-  ## bind all covariate rasters together ####
-  covs <- c(feed, hab, wood, pen)
-  
-  ## load in the hedges and egdes rasters ####
-  hedges_edges <- rast("outputs/script_4/ATLAS outputs/cropped hedges_edges raster.tif")
-  hedges_edges_dist <- rast("outputs/script_4/ATLAS outputs/cropped hedges_edges distance raster.tif")
-  
-  
-  ## start the simulation ####
-  sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
-                   dogin_prob, dogin_buffer, dogin_outside_edge, covs, Autmort, Wintmort, Springmort, 
-                   st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
-                   hedges_edges, hedges_edges_dist)
-  
-  ## save the simulation ####
-  saveRDS(sim_df, paste0("outputs/script_5/ATLAS output/", id, "_sim_output.rds"))
-  rm(sim_df)
-}; stopCluster(cl)

@@ -117,33 +117,18 @@ df$hab <- factor(df$hab)
 priors <- prior(normal(0, 1), class = b) + prior(exponential(1), class = sd)
 
 ## run the regression ####
-# m1 <- brm(
-#   formula = bf("sl ~ hab + SinceRel + (1|ID) + (1|site)"),
-#   data = df,
-#   family = "gamma",
-#   iter = 3000,
-#   warmup = floor(3000/2),
-#   chains = 4,
-#   cores = 4,
-#   backend = "cmdstan",
-#   prior = priors
-# ); saveRDS(m1, "outputs/script_2/sl_regress.rds")
+m1 <- brm(
+  formula = bf("sl ~ hab + SinceRel + (1|ID) + (1|site)"),
+  data = df,
+  family = "gamma",
+  iter = 3000,
+  warmup = floor(3000/2),
+  chains = 4,
+  cores = 4,
+  # backend = "cmdstan",
+  prior = priors
+); saveRDS(m1, "outputs/script_2/sl_regress.rds")
 
-m1 <- readRDS("outputs/script_2/sl_regress.rds")
-
-mcmc_trace(m1)
-m1_summ <- summary(m1)
-
-sl_pars <- list(
-  Intercept = m1_summ$fixed$Estimate[1], 
-  ID_sd = m1_summ$random$ID$Estimate[1],
-  Hab_values = c(2, 3, 4, 5, 6, 8, 10, 11),
-  Hab_betas = m1_summ$fixed$Estimate[2:9], 
-  Time_beta = m1_summ$fixed$Estimate[10], 
-  Gam_shape = m1_summ$spec_pars$Estimate[1]
-)
-
-saveRDS(sl_pars, "outputs/script_2/sl_pars.rds")
 
 # Turning angle regression ####
 
@@ -158,6 +143,8 @@ m2 <- brm(
   iter = 3000, 
   warmup = (3000/2), 
   chains = 4, 
-  cores = 4, 
-  backend = "cmdstan"
+  cores = 4#, 
+  # backend = "cmdstan"
 ); saveRDS(m1, "outputs/script_2/ta_regress.rds")
+
+mcmc_trace(m2)
