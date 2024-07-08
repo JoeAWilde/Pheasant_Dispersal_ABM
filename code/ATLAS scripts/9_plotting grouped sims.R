@@ -17,7 +17,7 @@ cen_pen <- st_centroid(pen) %>%
   st_coordinates()
 
 
-sim_df <- readRDS("outputs/script_6/simulation_data.rds") %>%
+sim_df <- readRDS("outputs/script_6/ATLAS output/simulation_data.rds") %>%
   filter(BirdDead!=1) %>%
   mutate(cent_X = x - cen_pen[1,1], 
          cent_Y = y - cen_pen[1,2],
@@ -157,6 +157,7 @@ p1 <- ggplot(data = final_df) +
   theme_classic() + 
   facet_wrap(vars(month))
 p1
+ggsave(p1, filename = "outputs/script_9/ATLAS data/distance_counts.png", units = "px", height = 4320, width = 7980)
 
 p2 <- ggplot(data = final_df) +
   geom_col(aes(x = dist_from_pen_str, y = mean_prop, fill = data_type,
@@ -170,3 +171,4 @@ p2 <- ggplot(data = final_df) +
   theme_classic() + 
   facet_wrap(vars(month))
 p2
+ggsave(p2, filename = "outputs/script_9/ATLAS data/distance_prop.png", units = "px", height = 4320, width = 7980)

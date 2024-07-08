@@ -16,7 +16,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
   
   hab_betas <- ssf_betas[which(grepl("HAB", toupper(names(ssf_betas))))]
   
-  names(hab_betas) <- substr(names(hab_betas), 9, 11)
+  names(hab_betas) <- substr(names(hab_betas), 4, 6)
   
   feed_index <- which(grepl("FEED", toupper(names(ssf_betas))))
   pen_index <- which(grepl("PEN", toupper(names(ssf_betas))) & 
@@ -183,7 +183,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
                    pen * df_id$DaysSinceRel[t] * ssf_betas[int_index])
         
         for(i in 1 : nrow(control_steps_df)) {
-          if(as.character(control_steps_df$hab[i]) != 10) {
+          if(as.character(control_steps_df$hab[i]) != 1) {
             control_steps_df$log_step_weight[i] <- control_steps_df$log_step_weight[i] + 
               hab_betas[which(as.character(control_steps_df$hab[i]) == names(hab_betas))]
           }

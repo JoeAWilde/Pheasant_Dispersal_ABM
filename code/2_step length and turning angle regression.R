@@ -29,7 +29,7 @@ angle_bounds_pos <- function(ta) {
 # ATLAS data ####
 
 ## load in the habitat data ####
-hab <- rast("outputs/script_1/ATLAS outputs/cropped habitat raster.tif")
+hab <- rast("outputs/script_1/ATLAS outputs/cropped release pen habitat raster.tif")
 
 ## load in the tracking data, subsample and calculate step length and turning angle ####
 
@@ -59,7 +59,7 @@ for(ss in c("A", "B", "D")) {
   
   ## load in the habitat data ####
   hab <- rast(paste0("outputs/script_1/APHA outputs/site ",
-                     ss, "/site ", ss, " cropped habitat raster.tif"))
+                     ss, "/site ", ss, " cropped release pen habitat raster.tif"))
   
   ## load in the tracking data, subsample and calculate step length and turning angle ####
   apha_ss <- readRDS(paste0("data/Data for Exeter - anonymised GPSV2/combined_current_tracks.rds")) %>%
@@ -127,8 +127,7 @@ m1 <- brm(
   cores = 4,
   # backend = "cmdstan",
   prior = priors
-); saveRDS(m1, "outputs/script_2/sl_regress.rds")
-
+); saveRDS(m1, "outputs/script_2/sl_regress_rp.rds")
 
 # Turning angle regression ####
 
@@ -145,6 +144,5 @@ m2 <- brm(
   chains = 4, 
   cores = 4#, 
   # backend = "cmdstan"
-); saveRDS(m1, "outputs/script_2/ta_regress.rds")
+); saveRDS(m1, "outputs/script_2/ta_regress_rp.rds")
 
-mcmc_trace(m2)

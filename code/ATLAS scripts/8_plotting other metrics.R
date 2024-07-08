@@ -17,7 +17,7 @@ cen_pen <- st_centroid(pen) %>%
   st_coordinates()
 
 
-sim_df <- readRDS("outputs/script_6/simulation_data.rds") %>%
+sim_df <- readRDS("outputs/script_6/ATLAS output/simulation_data.rds") %>%
   filter(BirdDead!=1) %>%
   mutate(cent_X = x - cen_pen[1,1], 
          cent_Y = y - cen_pen[1,2],

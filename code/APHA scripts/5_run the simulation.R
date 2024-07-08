@@ -10,7 +10,9 @@ library(progress)
 
 source("code/functions/simulation function.R")
 
-sites <- c("A", "B", "D")
+CRS_used <- "EPSG:27700"
+
+sites <- c("D")
 
 # Step length and turning angle regression ####
 
@@ -163,7 +165,8 @@ for(ss in sites){
     sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
                      dogin_prob, dogin_buffer, dogin_outside_edge, covs, Autmort, Wintmort, Springmort, 
                      st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
-                     hedges_edges, hedges_edges_dist)
+                     hedges_edges, hedges_edges_dist) %>%
+      mutate(site = ss)
     
     ## save the simulation ####
     saveRDS(sim_df, paste0("outputs/script_5/APHA output/site ",

@@ -36,7 +36,7 @@ ta_pars <- list(
 # iSSF parameters ####
 
 ## load in iSSF coefficients ####
-ssf_model <- readRDS("outputs/script_3/new_iSSF_fit_all_sites.rds")
+ssf_model <- readRDS("outputs/script_3/iSSF_rp.rds")
 ssf_betas <- ssf_model$model$coefficients
 
 ## extract names of coefficients ####
@@ -133,7 +133,7 @@ foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
   
   ## load in covariate rasters (can't be passed to workers) ####
   short_list <- T
-  hab <- rast("outputs/script_4/ATLAS outputs/cropped habitat raster.tif")
+  hab <- rast("outputs/script_4/ATLAS outputs/cropped release pen habitat raster.tif")
   pen <- rast("outputs/script_4/ATLAS outputs/cropped pen distance raster.tif")
   feed <- rast("outputs/script_4/ATLAS outputs/cropped feeder distance raster.tif")
   wood <- rast("outputs/script_4/ATLAS outputs/cropped wood distance raster.tif")
@@ -153,6 +153,6 @@ foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
                    hedges_edges, hedges_edges_dist)
   
   ## save the simulation ####
-  saveRDS(sim_df, paste0("outputs/script_5/ATLAS output/", id, "_sim_output.rds"))
+  saveRDS(sim_df, paste0("outputs/script_5/ATLAS output/", id, "_sim_output_rp.rds"))
   rm(sim_df)
 }; stopCluster(cl)

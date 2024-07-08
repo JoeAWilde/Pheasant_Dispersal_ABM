@@ -32,7 +32,7 @@ pheas_trk <-  read.table("data/Pheas_filtered.csv", header = T, sep = ",") %>%
          day = yday(t_))
 
 ## Load in simulated movement data ####
-sim_trk <- readRDS("outputs/script_6/simulation_data.rds") %>%
+sim_trk <- readRDS("outputs/script_6/ATLAS output/simulation_data_rp.rds") %>%
   filter(x != 0) %>%
   make_track(tbl = ., .x = x, .y = y, .t = DateTime,
              ID = id, SinceRel = DaysSinceRel, crs = "EPSG:27700") %>%
@@ -179,7 +179,7 @@ for(j in 1:nrow(Facets)){
   if(Facets[j,] == 1) month <- 13
   if(Facets[j,] == 2) month <- 14
   
-  output_path <- paste0("outputs/script_7/", month, " day homeranges big.png")
+  output_path <- paste0("outputs/script_7/ATLAS output/", month, " day homeranges_rp.png")
   
   png(output_path, type = "cairo", width = 7980, height = 6320)
   print(pt)
@@ -189,5 +189,5 @@ for(j in 1:nrow(Facets)){
 }
 while (dev.cur() != 1) dev.off()
 
-saveRDS(overlap_df, paste0("outputs/derived/script_9/site_", i, 
+saveRDS(overlap_df, paste0("outputs/script_7/ATLAS output/site_", i, 
                            "_KDE_overlap_values.rds"))
