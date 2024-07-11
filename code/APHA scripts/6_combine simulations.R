@@ -4,7 +4,7 @@ library(progress)
 for(ss in c("A", "B", "D")) {
   
   sim_files <- list.files(paste0("outputs/script_5/APHA output/site ", ss))[
-    which(grepl("_rp", list.files(paste0("outputs/script_5/APHA output/site ", ss))))
+    which(grepl("trimmed", list.files(paste0("outputs/script_5/APHA output/site ", ss))))
   ]
   
   for(i in sim_files) {
@@ -25,4 +25,4 @@ for(ss in c("A", "B", "D")) {
   } else {
     all_sites_df <- rbind(all_sites_df, all_df)
   }
-};saveRDS(all_sites_df, "outputs/script_6/APHA output/simulation_data_rp.rds")
+};saveRDS(all_sites_df, "outputs/script_6/APHA output/simulation_data_trimmed.rds")

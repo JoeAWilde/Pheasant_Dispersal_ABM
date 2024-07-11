@@ -46,7 +46,7 @@ cov_names <- names(ssf_betas)
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 100
+n_IDS <- 1000
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + years(1), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
@@ -157,8 +157,8 @@ for(ss in sites){
     covs <- c(feed, hab, wood, pen)
     
     ## load in the hedges and egdes rasters ####
-    hedges_edges <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped hedges_edges raster.tif"))
-    hedges_edges_dist <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped hedges_edges distance raster.tif"))
+    hedges_edges <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped trimmed hedges_edges raster.tif"))
+    hedges_edges_dist <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped trimmed hedges_edges distance raster.tif"))
     
     
     ## start the simulation ####
@@ -170,7 +170,7 @@ for(ss in sites){
     
     ## save the simulation ####
     saveRDS(sim_df, paste0("outputs/script_5/APHA output/site ",
-                           ss, "/", id, "_sim_output_site_", ss, ".rds"))
+                           ss, "/", id, "_sim_output_site_", ss, "trimmed.rds"))
     rm(sim_df)
   }; stopCluster(cl)
 }

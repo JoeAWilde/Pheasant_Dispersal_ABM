@@ -10,8 +10,9 @@ library(ggblend)
 
 CRS_used <- "EPSG:27700"
 
-for(ss in c("A", "B", "D")){
-  sim_df <- readRDS("outputs/script_6/APHA output/simulation_data_rp.rds") %>%
+# for(ss in c("A", "B", "D")){
+for(ss in c("B")){
+  sim_df <- readRDS("outputs/script_6/APHA output/simulation_data.rds") %>%
     filter(site == ss) %>%
     mutate(month = month.name[month(DateTime)],
            dist_from_pen = sqrt(x^2 + y^2), 

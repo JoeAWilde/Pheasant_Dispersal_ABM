@@ -31,9 +31,10 @@ for(i in c("A", "B", "D")){
            day = yday(t_))
   
   ## Load in simulated movement data ####
-  sim_trk <- readRDS("outputs/script_6/APHA output/simulation_data_rp.rds") %>%
+  sim_trk <- readRDS("outputs/script_6/APHA output/simulation_data_trimmed.rds") %>%
     filter(site == i) %>%
     na.omit() %>%
+    filter(id %in% sample(1:max(id), 10)) %>%
     mutate(id = paste(site, id, sep = "_")) %>%
     make_track(tbl = ., .x = x, .y = y, .t = DateTime,
                ID = id, SinceRel = DaysSinceRel, site = site, crs = "EPSG:27700") %>%
@@ -185,7 +186,7 @@ for(i in c("A", "B", "D")){
     if(Facets[j,] == 1) month <- 13
     if(Facets[j,] == 2) month <- 14
     
-    output_path <- paste0("outputs/script_7/APHA output/site ", i, "/", month, " day homeranges_rp.png")
+    output_path <- paste0("outputs/script_7/APHA output/site ", i, "/", month, " day homeranges_trimmed.png")
     
     png(output_path, type = "cairo", width = 7980, height = 6320)
     print(pt)
