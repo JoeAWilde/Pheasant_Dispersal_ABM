@@ -47,7 +47,7 @@ writeRaster(pen_dist, "outputs/script_4/ATLAS outputs/cropped pen distance raste
 ## Release woodland ####
 
 ### create a buffer around the release pen as vect and raster ####
-pen_buffer <- buffer(vect(pen), width = 250)
+pen_buffer <- buffer(vect(pen), width = 500)
 pb_rast <- rasterize(pen_buffer, hab, res = 1000) %>%
   ifel(. == 1, 33, .) #note: release area is marked as value 33
 

@@ -12,7 +12,7 @@ source("code/functions/simulation function.R")
 
 CRS_used <- "EPSG:27700"
 
-sites <- c("D")
+sites <- c("A", "B", "D")
 
 # Step length and turning angle regression ####
 
@@ -37,7 +37,7 @@ ta_pars <- list(
 # iSSF parameters ####
 
 ## load in iSSF coefficients ####
-ssf_model <- readRDS("outputs/script_3/new_iSSF_fit_all_sites.rds")
+ssf_model <- readRDS("outputs/script_3/iSSF_rp.rds")
 ssf_betas <- ssf_model$model$coefficients
 
 ## extract names of coefficients ####

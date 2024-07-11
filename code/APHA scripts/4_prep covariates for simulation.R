@@ -6,6 +6,7 @@ library(terra)
 library(tidyterra)
 library(sf)
 source("code/functions/UKCEH_functions.R")
+source("code/functions/hedge_trimming.R")
 
 # APHA data ####
 CRS_used <- "EPSG:27700"
@@ -64,7 +65,7 @@ for(ss in c("A", "B", "D")) {
   ## Release woodland ####
   
   ### create a buffer around the release pen as vect and raster ####
-  pen_buffer <- buffer(vect(pen), width = 250)
+  pen_buffer <- buffer(vect(pen), width = 500)
   pb_rast <- rasterize(pen_buffer, hab, res = 1000) %>%
     ifel(. == 1, 33, .) #note: release area is marked as value 33
   
@@ -118,6 +119,22 @@ for(ss in c("A", "B", "D")) {
   he_dist <- distance(hedges_edges_rast)
   writeRaster(he_dist, paste0("outputs/script_4/APHA outputs/site ", ss,
                               "/site ", ss, " cropped hedges_edges distance raster.tif"), overwrite = T)
+  
+  
+  ## Trimmed hedges and edges ####
+  
+  ### use function to trim hedges within a certain radius of the centre of the pen ####
+  trim_hedges_rast <- trim_hedges(hab, hedges_rast, cen_pen, 2000)
+  
+  ### merge the hedges and woodland to make trimmed hedges and edges and save ####
+  trim_hedges_edges_rast <- merge(wood_rast, trim_hedges_rast)
+  writeRaster(trim_hedges_edges_rast, paste0("outputs/script_4/APHA outputs/site ", ss,
+                                        "/site ", ss, " cropped trimmed hedges_edges raster.tif"), overwrite = T)
+  
+  ### create a raster of the distance to trimmed hedges and edges and save####
+  trim_he_dist <- distance(trim_hedges_edges_rast)
+  writeRaster(trim_he_dist, paste0("outputs/script_4/APHA outputs/site ", ss,
+                              "/site ", ss, " cropped trimmed hedges_edges distance raster.tif"), overwrite = T)
   
   
   ## Feeders ####
