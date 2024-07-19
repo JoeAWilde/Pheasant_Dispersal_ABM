@@ -11,13 +11,7 @@ library(ggblend)
 CRS_used <- "EPSG:27700"
 
 for(ss in c("A", "B", "D")){
-# for(ss in c("B")){
-  sim_df <- readRDS("outputs/script_6/APHA output/simulation_data_feederattraction.rds") %>%
-    filter(site == ss) %>%
-    mutate(month = month.name[month(DateTime)],
-           dist_from_pen = sqrt(x^2 + y^2), 
-           sl_ = sqrt(((x - lag(x))^2 + (y - lag(y))^2)))
-  
+  # for(ss in c("B")){
   real_df <- readRDS("data/Data for Exeter - anonymised GPSV2/combined_current_tracks.rds") %>%
     filter(site == ss) %>%
     mutate(
@@ -26,6 +20,15 @@ for(ss in c("A", "B", "D")){
       dist_from_pen = sqrt(X_coord^2 + Y_coord^2), 
       sl_ = sqrt(((X_coord - lag(X_coord))^2 + (Y_coord - lag(Y_coord))^2))
     )
+  
+  sim_df_trimmed <- readRDS("outputs/script_6/APHA output/simulation_data_trimmed.rds") %>%
+    filter(site == ss) %>%
+    mutate(month = month.name[month(DateTime)],
+           dist_from_pen = sqrt(x^2 + y^2), 
+           sl_ = sqrt(((x - lag(x))^2 + (y - lag(y))^2)))
+  
+  
+  
   
   
   count_df <- data.frame(
@@ -148,7 +151,7 @@ for(ss in c("A", "B", "D")){
     facet_wrap(vars(month))
   p1
   
-  ggsave(p1, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_counts_feederattraction.png"), units = "px", height = 4320, width = 7980)
+  ggsave(p1, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_counts_trimmed.png"), units = "px", height = 4320, width = 7980)
   
   p2 <- ggplot(data = final_df) +
     geom_col(aes(x = dist_from_pen_str, y = mean_prop, fill = data_type,
@@ -162,5 +165,5 @@ for(ss in c("A", "B", "D")){
     theme_classic() + 
     facet_wrap(vars(month))
   p2
-  ggsave(p2, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_prop_feederattraction.png"), units = "px", height = 4320, width = 7980)
+  ggsave(p2, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_prop_trimmed.png"), units = "px", height = 4320, width = 7980)
 }

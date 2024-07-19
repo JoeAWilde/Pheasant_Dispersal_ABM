@@ -1,5 +1,5 @@
 id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
-                   dogin_prob, dogin_buffer, dogin_outside_edge, covs, Autmort, Wintmort, Springmort, 
+                   dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
                    st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
                    hedges_edges, hedges_edges_dist) {
   require(tidyverse)
@@ -16,7 +16,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
   
   hab_betas <- ssf_betas[which(grepl("HAB", toupper(names(ssf_betas))))]
   
-  names(hab_betas) <- substr(names(hab_betas), 9, 11)
+  names(hab_betas) <- substr(names(hab_betas), 4, 6)
   
   feed_index <- which(grepl("FEED", toupper(names(ssf_betas))))
   pen_index <- which(grepl("PEN", toupper(names(ssf_betas))) & 
@@ -105,7 +105,13 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
       
     } else {
       if(df_id$DayNight[t] == "NIGHT") {
-        in_woods_value <- extract(hedges_edges, as.matrix(cbind(df_id$x[t - 1], df_id$y[t - 1])))[1, 1]
+        if(month(df_id$DateTime[t]) %in% c(month(st_date) : (month(st_date)+2))) { 
+          night_rast <- wood_rast
+        } else {
+          night_rast <- hedges_edges
+        }
+        
+        in_woods_value <- extract(night_rast, as.matrix(cbind(df_id$x[t - 1], df_id$y[t - 1])))[1, 1]
         in_woods_value <- ifelse(is.na(in_woods_value), 0, 1)
         
         in_woods <- ifelse(in_woods_value == 1, TRUE, FALSE)
@@ -183,7 +189,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
                    pen * df_id$DaysSinceRel[t] * ssf_betas[int_index])
         
         for(i in 1 : nrow(control_steps_df)) {
-          if(as.integer(control_steps_df$hab[i]) != 10) {
+          if(as.integer(control_steps_df$hab[i]) != 1) {
             control_steps_df$log_step_weight[i] <- control_steps_df$log_step_weight[i] + 
               hab_betas[which(as.character(control_steps_df$hab[i]) == names(hab_betas))]
           }

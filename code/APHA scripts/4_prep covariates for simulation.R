@@ -102,6 +102,10 @@ for(ss in c("A", "B", "D")) {
   ### extract just the woodland from hab ####
   wood_rast <- ifel(hab %in% 1:2, 1, NA)
   
+  ### save just woodland as a raster ####
+  writeRaster(wood_rast, paste0("outputs/script_4/APHA outputs/site ", ss, 
+                                "/site ", ss, " cropped wood raster.tif"), overwrite = T)
+  
   ### extract and save distance to woodland raster ####
   wood_dist <- distance(wood_rast)
   writeRaster(wood_dist, paste0("outputs/script_4/APHA outputs/site ", ss,
@@ -141,12 +145,12 @@ for(ss in c("A", "B", "D")) {
   
   ### load in the feeder points and convert to shapefile ####
   feeders <- read.table(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ",
-                               ss, "/Site ", ss, " Hopper_Feeder Location Data.csv"),
+                               ss, "/FAKE_Site ", ss, " Hopper_Feeder Location Data.csv"),
                         sep = ",", header = T) %>%
     st_as_sf(., coords = c("X", "Y"), crs = CRS_used)
   
   ### create a raster of distance to feeders and save ####
   feed_dist <- distance(hab, feeders)
   writeRaster(feed_dist, paste0("outputs/script_4/APHA outputs/site ", ss,
-                                "/site ", ss, " cropped feeder distance raster.tif"), overwrite = T)
+                                "/site ", ss, " cropped FAKE feeder distance raster.tif"), overwrite = T)
 }
