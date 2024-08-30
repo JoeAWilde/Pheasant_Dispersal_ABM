@@ -10,9 +10,9 @@ library(ggblend)
 
 CRS_used <- "EPSG:27700"
 
-for(ss in c("A", "B")){
+for(ss in c("A", "B", "D")){
 # for(ss in c("B")){
-  sim_df <- readRDS("outputs/script_6/APHA output/simulation_data_pen at night 3.rds") %>%
+  sim_df <- readRDS("outputs/script_6/APHA output/simulation_data_doginchange.rds") %>%
     filter(site == ss) %>%
     mutate(month = month.name[month(DateTime)],
            dist_from_pen = sqrt(x^2 + y^2), 
@@ -185,7 +185,7 @@ for(ss in c("A", "B")){
     facet_wrap(vars(month))
   p1
   
-  ggsave(p1, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_counts_pen at night 3.png"), units = "px", height = 4320, width = 7980)
+  ggsave(p1, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_counts_doginchange.png"), units = "px", height = 4320, width = 7980)
   
   p2 <- ggplot(data = final_df) +
     geom_col(aes(x = dist_from_pen_str, y = mean_prop, fill = data_type,
@@ -201,5 +201,5 @@ for(ss in c("A", "B")){
     theme_classic() + 
     facet_wrap(vars(month))
   p2
-  ggsave(p2, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_prop_pen at night 3.png"), units = "px", height = 4320, width = 7980)
+  ggsave(p2, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_prop_doginchange.png"), units = "px", height = 4320, width = 7980)
 }

@@ -1,10 +1,10 @@
 library(tidyverse)
 library(progress)
 
-for(ss in c("A", "B", "D")) {
+for(ss in c("A", "B")) {
   
   sim_files <- list.files(paste0("outputs/script_5/APHA output/site ", ss))[
-    which(grepl("feeder attraction", list.files(paste0("outputs/script_5/APHA output/site ", ss))))
+    which(grepl("pen at night 3", list.files(paste0("outputs/script_5/APHA output/site ", ss))))
   ]
   
   for(i in sim_files) {
@@ -25,4 +25,4 @@ for(ss in c("A", "B", "D")) {
   } else {
     all_sites_df <- rbind(all_sites_df, all_df)
   }
-};saveRDS(all_sites_df, "outputs/script_6/APHA output/simulation_data_feederattraction.rds")
+};saveRDS(all_sites_df, "outputs/script_6/APHA output/simulation_data_pen at night 3.rds")

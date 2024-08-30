@@ -37,9 +37,8 @@ ta_pars <- list(
 # iSSF parameters ####
 
 ## load in iSSF coefficients ####
-ssf_model <- readRDS("outputs/script_3/iSSF_rp.rds")
+ssf_model <- readRDS("outputs/script_3/iSSF.rds")
 ssf_betas <- ssf_model$model$coefficients
-ssf_betas[1] <- ssf_betas[1] / 10
 
 ## extract names of coefficients ####
 cov_names <- names(ssf_betas)
@@ -101,8 +100,7 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 
 
 
-# for(ss in sites){
-ss <- "A"
+for(ss in sites){
   # Parallel processing set up ####
   ## create cluster of cores ####
   cl <- makeCluster(parallel::detectCores(logical = F)-2, type = "SOCK")
@@ -123,7 +121,7 @@ ss <- "A"
   
   opts <- list(progress = progress)
   # Simulation loop ####
-  # foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
+  foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
     ## reload required packages for each worker ####
     require(tidyverse)
     require(terra)
@@ -162,10 +160,10 @@ ss <- "A"
                              "/site ", ss, " cropped wood raster.tif"))
     
     ## load in the hedges and egdes rasters ####
-    hedges_edges <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped hedges_edges raster.tif"))
-    hedges_edges_dist <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped hedges_edges distance raster.tif"))
+    hedges_edges <- rast(paste0("outputs/script_4/APHA outputs/site ", ss,
+                                "/site ", ss, " cropped wood raster.tif"))
+    hedges_edges_dist <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped wood distance raster.tif"))
     
-    id <- 1
     ## start the simulation ####
     sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
                      dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
@@ -175,7 +173,7 @@ ss <- "A"
     
     ## save the simulation ####
     saveRDS(sim_df, paste0("outputs/script_5/APHA output/site ",
-                           ss, "/", id, "_sim_output_site_", ss, "feeder attraction.rds"))
+                           ss, "/", id, "_sim_output_site_", ss, "kde_woodland.rds"))
     rm(sim_df)
   }; stopCluster(cl)
 }

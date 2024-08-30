@@ -16,23 +16,21 @@ source("code/functions/UKCEH_functions.R")
 
 CRS_used <- "EPSG:27700"
 
-for(i in c("A", "B")){
   ## Load in actual movement data ####
-  pheas_trk <-  readRDS("data/Data for Exeter - anonymised GPSV2/combined_current_tracks.rds") %>%
-    filter(site == i) %>%
-    group_by(ID) %>%
-    mutate(SinceRel = as.numeric(difftime(DateTime, DateTime[1], units = "days"))) %>%
-    ungroup() %>%
-    make_track(tbl = ., .x = X_coord, .y = Y_coord, .t = DateTime,
-               ID = ID, SinceRel = SinceRel, site = site, crs = "EPSG:27700") %>%
-    time_of_day(.) %>%
-    mutate(week = week(t_),
-           month = month(t_),
-           day = yday(t_))
+  # pheas_trk <-  readRDS("data/Data for Exeter - anonymised GPSV2/combined_current_tracks.rds") %>%
+  #   filter(site == i) %>%
+  #   group_by(ID) %>%
+  #   mutate(SinceRel = as.numeric(difftime(DateTime, DateTime[1], units = "days"))) %>%
+  #   ungroup() %>%
+  #   make_track(tbl = ., .x = X_coord, .y = Y_coord, .t = DateTime,
+  #              ID = ID, SinceRel = SinceRel, site = site, crs = "EPSG:27700") %>%
+  #   time_of_day(.) %>%
+  #   mutate(week = week(t_),
+  #          month = month(t_),
+  #          day = yday(t_))
   
   ## Load in simulated movement data ####
-  sim_trk <- readRDS("outputs/script_6/APHA output/simulation_data_pen at night 3.rds") %>%
-    filter(site == i) %>%
+  sim_trk <- readRDS("outputs/script_6/Exmoor site/all_sims.rds") %>%
     na.omit() %>%
     filter(id %in% sample(1:max(id), 10)) %>%
     mutate(id = paste(site, id, sep = "_")) %>%
@@ -186,7 +184,7 @@ for(i in c("A", "B")){
     if(Facets[j,] == 1) month <- 13
     if(Facets[j,] == 2) month <- 14
     
-    output_path <- paste0("outputs/script_7/APHA output/site ", i, "/", month, " day homeranges_pen at night 3.png")
+    output_path <- paste0("outputs/script_7/APHA output/site ", i, "/", month, " day homeranges_feederattraction.png")
     
     png(output_path, type = "cairo", width = 7980, height = 6320)
     print(pt)
