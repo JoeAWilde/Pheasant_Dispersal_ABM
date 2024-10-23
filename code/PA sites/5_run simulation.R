@@ -7,12 +7,15 @@ library(doSNOW)
 library(sf)
 library(suncalc)
 library(progress)
+library(readxl)
 
 source("code/functions/simulation function.R")
 
 CRS_used <- "EPSG:27700"
 
-sites <- c("D")
+site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
+  mutate(id = paste0(substr(Location, 1, 2), Approx_dist_from_PA))
+sites <- site_coords$id
 
 # Step length and turning angle regression ####
 
@@ -100,7 +103,7 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 
 
 
-for(ss in sites){
+for(ss in sites[12:length(sites)]){
   # Parallel processing set up ####
   ## create cluster of cores ####
   cl <- makeCluster(parallel::detectCores(logical = F)-2, type = "SOCK")
@@ -127,20 +130,7 @@ for(ss in sites){
     require(terra)
     require(sf)
     
-    pen <- read.table(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ", ss,
-                             "/Site ", ss, "_Release Pen Coordinate data.csv"),
-                      sep = ",", header = TRUE) %>%
-      dplyr::select(X, Y)
-    # Ensure the loop is closed
-    if(any(pen[nrow(pen), ] != pen[1, ])) {
-      pen <- rbind(pen, pen[1, ])
-    }
-    # Convert to sf, specifying the CRS if known
-    pen_sf <- st_as_sf(pen, coords = c("X", "Y"), crs = CRS_used)
-    # Convert to LINESTRING
-    pen_line <- st_sfc(st_linestring(as.matrix(pen)), crs = CRS_used)
-    pen_pts <- vect(st_cast(pen_line, "POLYGON", crs = CRS_used)) %>%
-      st_as_sf()
+    pen_pts <- st_read(paste0("outputs/PA sites/script_3/", ss, "_pen_shapefile.shp"))
     
     ## create the area where dogging in occurs ####
     dogin_buffer <- st_difference(st_buffer(st_geometry(pen_pts), dist = 200), pen_pts)
@@ -148,32 +138,31 @@ for(ss in sites){
     
     ## load in covariate rasters (can't be passed to workers) ####
     short_list <- T
-    hab <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped habitat raster.tif"))
-    pen <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped pen distance raster.tif"))
-    feed <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped feeder distance raster.tif"))
-    wood <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped wood distance raster.tif"))
+    hab <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped habitat raster.tif"))
+    pen <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped pen distance raster.tif"))
+    feed <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped FAKE feeder distance raster.tif"))
+    wood <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped wood distance raster.tif"))
     
     ## bind all covariate rasters together ####
     covs <- c(feed, hab, wood, pen)
     
-    wood_rast <- rast(paste0("outputs/script_4/APHA outputs/site ", ss,
-                             "/site ", ss, " cropped wood raster.tif"))
+    wood_rast <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped wood raster.tif"))
     
     ## load in the hedges and egdes rasters ####
-    hedges_edges <- rast(paste0("outputs/script_4/APHA outputs/site ", ss,
-                                "/site ", ss, " cropped trimmed hedges_edges raster.tif"))
-    hedges_edges_dist <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped trimmed hedges_edges distance raster.tif"))
+    hedges_edges <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges raster.tif"))
+    hedges_edges_dist <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges distance raster.tif"))
     
     ## start the simulation ####
-    sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
-                     dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
-                     st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
-                     hedges_edges, hedges_edges_dist) %>%
-      mutate(site = ss)
-    
-    ## save the simulation ####
-    saveRDS(sim_df, paste0("outputs/script_5/APHA output/site ",
-                           ss, "/", id, "_sim_output_site_", ss, "inside_feeding.rds"))
-    rm(sim_df)
+    try({
+      sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
+                       dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
+                       st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
+                       hedges_edges, hedges_edges_dist) %>%
+        mutate(site = ss)
+      
+      ## save the simulation ####
+      saveRDS(sim_df, paste0("outputs/PA sites/script_5/", id, "_sim_output_site_", ss, ".rds"))
+      rm(sim_df)
+    })
   }; stopCluster(cl)
 }

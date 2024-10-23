@@ -9,13 +9,16 @@ source("code/functions/UKCEH_functions.R")
 
 # load in data ####
 
-df <- readRDS("outputs/script_6/APHA output/simulation_data.rds") %>%
-  filter(id == 3 & site == "B")
+df <- readRDS("outputs/script_6/APHA output/simulation_data_kde_woodland_50_percent.rds") %>%
+  filter(id == 20 & month(DateTime) == 8 & site == "A")
 
-hab <- rast("outputs/script_4/APHA outputs/site B/site B cropped habitat raster.tif") %>%
+# df <- readRDS("outputs/script_6/APHA output/simulation_data_kde_woodland.rds") %>%
+#   filter(id == 1 & site == "A" & month(DateTime) == 7)
+
+hab <- rast("outputs/script_4/APHA outputs/site A/site A cropped habitat raster.tif") %>%
   ifel(. == 0, NA, .)
 
-pen_pts <- read.table("data/Data for Exeter - anonymised LandscapeV2/Site B/Site B_Release Pen Coordinate data.csv", 
+pen_pts <- read.table("data/Data for Exeter - anonymised LandscapeV2/Site A/Site A_Release Pen Coordinate data.csv", 
                       sep = ",", header = TRUE) %>%
   dplyr::select(X, Y)
 # Ensure the loop is closed
@@ -30,7 +33,7 @@ pen <- vect(st_cast(pen_line, "POLYGON", crs = "EPSG:27700")) %>%
   st_as_sf()
 
 
-feeder_pts <- read.csv("data/Data for Exeter - anonymised LandscapeV2/Site B/Site B Hopper_Feeder Location Data.csv") %>%
+feeder_pts <- read.csv("data/Data for Exeter - anonymised LandscapeV2/Site A/Site A Hopper_Feeder Location Data.csv") %>%
   vect(., geom = c("X", "Y"), crs = "EPSG:27700") 
 
 # build up the plot ####
@@ -55,8 +58,8 @@ p1 <- ggplot() +
   new_scale_color() + 
   ## Add home ranges
   
-  geom_path(data = df, aes(x = x, y = y, colour = DayNight, group = id), linewidth = 10, alpha = 0.5) + 
-  geom_point(data = df, aes(x = x, y = y, colour = DayNight, group = id), size = 20) + 
+  geom_path(data = df, aes(x = x, y = y, colour = DayNight, group = id), linewidth = 10, alpha = 0.7) + 
+  geom_point(data = df, aes(x = x, y = y, colour = DayNight, group = id), size = 30) + 
   scale_colour_manual(name = "Time of day", values = c("turquoise", "navy")) + 
   
   annotation_north_arrow(which_north = "grid", height = unit(10, "cm"),
@@ -80,6 +83,6 @@ anim <- p1 +
   transition_reveal(df$DateTime) +
   ggtitle("Date: {frame_along}")
 
-animate(anim, nframes = nrow(df), fps = 4, height = 6320, width =7980)
+animate(anim, nframes = nrow(df), fps = 8, height = 6320, width =7980)
 
-anim_save(filename = "site_B_id_3.gif", path = "outputs/animated tracks")
+anim_save(filename = "site_A_id_20_kde_woodland_month2.gif", path = "outputs/animated tracks")

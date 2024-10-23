@@ -2,6 +2,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
                    dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
                    st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
                    hedges_edges, hedges_edges_dist) {
+  require(tidyterra)
   require(tidyverse)
   require(sf)
   require(hms)
@@ -66,7 +67,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
   
   is_within_raster <- T
   
-  for(t in 2 : 14) {
+  for(t in 2 : nrow(df_id)) {
     if(date(df_id$DateTime[t]) != date(df_id$DateTime[t - 1])) {
       if(date(df_id$DateTime[t]) %in% Autmort$Autdays) {
         death_prob <- Autmort$Autdaily
@@ -116,7 +117,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
         
         if(!in_woods) {
           control_steps_df <- data.frame(
-            sl_ = rgamma(n_csteps, sl_pars$Gam_shape, sl_pars$Gam_shape / sl_pars$Intercept), 
+            sl_ = rgamma(n_csteps, sl_pars$Gam_shape, sl_pars$Gam_shape / exp(sl_pars$Intercept)), 
             ta_ = as.numeric(rvonmises(n_csteps, ta_pars$vm_mu, ta_pars$vm_kappa))) %>%
             mutate(absta_ = (ta_ + df_id$absta[t - 1]) %% (2 * pi), 
                    x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
@@ -124,7 +125,14 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
             cbind(., extract(kde_50_woodland, as.matrix(cbind(.$x, .$y)))) %>%
             rename(dist = ncol(.))
           
-          min_kde_wood_dist <- which(control_steps_df$dist == min(control_steps_df$dist))[1]
+          min_kde_wood_dist <- which(control_steps_df$dist == min(control_steps_df$dist))
+          
+          if(length(min_kde_wood_dist) > 1) {
+            control_steps_df <- control_steps_df[min_kde_wood_dist,]
+            min_kde_wood_dist <- which(control_steps_df$sl_ == max(control_steps_df$sl_))
+          }
+          
+          selected_index <- min_kde_wood_dist
           
           df_id$x[t] <- control_steps_df$x[selected_index]
           df_id$y[t] <- control_steps_df$y[selected_index]
@@ -144,83 +152,109 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
         if(!is_within_raster) {
           df_id$BoundaryHit[t] <- T
         }
+      } else {
+        gam_eta <- sl_pars$Intercept# + 
+        # sl_pars$Time_beta * df_id$DaysSinceRel[t]
+        
+        # current_hab <- extract(covs[[2]], as.matrix(cbind(df_id$x[t-1], df_id$y[t-1])))[1, 1]
+        # 
+        # in_woods <- current_hab == 10
+        # 
+        # if(!in_woods) {
+        #   current_hab_index <- which(current_hab == sl_pars$Hab_values)
+        #   gam_eta <- gam_eta + sl_pars$Hab_betas[current_hab_index]
+        # }
+        
+        gam_mu <- exp(gam_eta)
+        
+        control_steps_df <- data.frame(
+          sl_ = rgamma(n_csteps, sl_pars$Gam_shape, sl_pars$Gam_shape / gam_mu), 
+          ta_ = as.numeric(rvonmises(n_csteps, ta_pars$vm_mu, ta_pars$vm_kappa))) %>%
+          mutate(absta_ = (ta_ + df_id$absta[t - 1]) %% (2 * pi), 
+                 x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
+                 y = df_id$y[t - 1] + (sl_ * sin(absta_))) %>%
+          cbind(., terra::extract(covs, cbind(.$x, .$y))) %>%
+          na.omit()
+        if(nrow(control_steps_df) == 0) {
+          df_id$BoundaryHit[t] <- T
+          break
+        }
+        names(control_steps_df)[6:9] <- c("feed", "hab", "wood", "pen")
+        
+        control_steps_df <- control_steps_df %>%
+          filter(
+            !hab %in% 7:9 
+          )
+        
+        while(nrow(control_steps_df) == 0) {
+          control_steps_df <- data.frame(
+            sl_ = rgamma(n_csteps, sl_pars$Gam_shape, sl_pars$Gam_shape / gam_mu), 
+            ta_ = as.numeric(rvonmises(n_csteps, ta_pars$vm_mu, ta_pars$vm_kappa))) %>%
+            mutate(absta_ = (ta_ + df_id$absta[t - 1]) %% (2 * pi), 
+                   x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
+                   y = df_id$y[t - 1] + (sl_ * sin(absta_))) %>%
+            cbind(., terra::extract(covs, cbind(.$x, .$y))) %>%
+            na.omit()
+        }
+        
+        if(month(df_id$DateTime[t]) %in% 7:8) {
+          control_steps_df <- control_steps_df %>%
+            mutate(log_step_weight = pen * ssf_betas[feed_index] + 
+                     pen * ssf_betas[pen_index] + 
+                     sl_ * ssf_betas[sl_index] + 
+                     log(sl_) * ssf_betas[log_sl_index] + 
+                     cos(ta_) * ssf_betas[cos_ta_index] + 
+                     pen * df_id$DaysSinceRel[t] * ssf_betas[int_index])
+          
+        } else {
+          control_steps_df <- control_steps_df %>%
+            mutate(log_step_weight = feed * ssf_betas[feed_index] + 
+                     pen * ssf_betas[pen_index] + 
+                     sl_ * ssf_betas[sl_index] + 
+                     log(sl_) * ssf_betas[log_sl_index] + 
+                     cos(ta_) * ssf_betas[cos_ta_index] + 
+                     pen * df_id$DaysSinceRel[t] * ssf_betas[int_index])
+        }
+        
+        
+        for(i in 1 : nrow(control_steps_df)) {
+          if(as.integer(control_steps_df$hab[i]) != 1) {
+            control_steps_df$log_step_weight[i] <- control_steps_df$log_step_weight[i] + 
+              hab_betas[which(as.character(control_steps_df$hab[i]) == names(hab_betas))]
+          }
+        }
+        
+        control_steps_df$step_weight <- exp(control_steps_df$log_step_weight)
+        control_steps_df$step_prob <- control_steps_df$step_weight / sum(control_steps_df$step_weight)
+        
+        selected_index <- sample(1:nrow(control_steps_df), 1, prob = control_steps_df$step_prob)
+        
+        df_id$x[t] <- control_steps_df$x[selected_index]
+        df_id$y[t] <- control_steps_df$y[selected_index]
+        df_id$absta[t] <- control_steps_df$absta_[selected_index]
+        df_id$ta_[t] <- control_steps_df$ta_[selected_index]
+        df_id$sl_[t] <- control_steps_df$sl_[selected_index]
+        
+        if(any(is.na(df_id[t,]))) {
+          in_within_raster <- F
+        }
+        
+        if(!is_within_raster) {
+          df_id$BoundaryHit[t] <- T
+        }
       }
-    }
-  } else {
-    gam_eta <- sl_pars$Intercept# + 
-    # sl_pars$Time_beta * df_id$DaysSinceRel[t]
-    
-    # current_hab <- extract(covs[[2]], as.matrix(cbind(df_id$x[t-1], df_id$y[t-1])))[1, 1]
-    # 
-    # in_woods <- current_hab == 10
-    # 
-    # if(!in_woods) {
-    #   current_hab_index <- which(current_hab == sl_pars$Hab_values)
-    #   gam_eta <- gam_eta + sl_pars$Hab_betas[current_hab_index]
-    # }
-    
-    gam_mu <- exp(gam_eta)
-    
-    control_steps_df <- data.frame(
-      sl_ = rgamma(n_csteps, sl_pars$Gam_shape, sl_pars$Gam_shape / gam_mu), 
-      ta_ = as.numeric(rvonmises(n_csteps, ta_pars$vm_mu, ta_pars$vm_kappa))) %>%
-      mutate(absta_ = (ta_ + df_id$absta[t - 1]) %% (2 * pi), 
-             x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
-             y = df_id$y[t - 1] + (sl_ * sin(absta_))) %>%
-      cbind(., terra::extract(covs, cbind(.$x, .$y))) %>%
-      na.omit()
-    if(nrow(control_steps_df) == 0) {
-      df_id$BoundaryHit[t] <- T
-      break
-    }
-    names(control_steps_df)[6:9] <- c("feed", "hab", "wood", "pen")
-    
-    control_steps_df <- control_steps_df %>%
-      mutate(log_step_weight = feed * ssf_betas[feed_index] + 
-               pen * ssf_betas[pen_index] + 
-               sl_ * ssf_betas[sl_index] + 
-               log(sl_) * ssf_betas[log_sl_index] + 
-               cos(ta_) * ssf_betas[cos_ta_index] + 
-               pen * df_id$DaysSinceRel[t] * ssf_betas[int_index])
-    
-    for(i in 1 : nrow(control_steps_df)) {
-      if(as.integer(control_steps_df$hab[i]) != 1) {
-        control_steps_df$log_step_weight[i] <- control_steps_df$log_step_weight[i] + 
-          hab_betas[which(as.character(control_steps_df$hab[i]) == names(hab_betas))]
-      }
-    }
-    
-    control_steps_df$step_weight <- exp(control_steps_df$log_step_weight)
-    control_steps_df$step_prob <- control_steps_df$step_weight / sum(control_steps_df$step_weight)
-    
-    selected_index <- sample(1:nrow(control_steps_df), 1, prob = control_steps_df$step_prob)
-    
-    df_id$x[t] <- control_steps_df$x[selected_index]
-    df_id$y[t] <- control_steps_df$y[selected_index]
-    df_id$absta[t] <- control_steps_df$absta_[selected_index]
-    df_id$ta_[t] <- control_steps_df$ta_[selected_index]
-    df_id$sl_[t] <- control_steps_df$sl_[selected_index]
-    
-    if(any(is.na(df_id[t,]))) {
-      in_within_raster <- F
-    }
-    
-    if(!is_within_raster) {
-      df_id$BoundaryHit[t] <- T
     }
   }
-}
-}
-
-
-dead_index <- which(df_id$birddead == 1 | df_id$BoundaryHit == T)[1]
-
-if(length(dead_index) > 0 & !is.na(dead_index)) {
-  df_id <- df_id[1:(dead_index-1), ]
-}
-
-df_id <- subset(df_id, BirdDead != 1)
-return(df_id)
+  
+  
+  dead_index <- which(df_id$birddead == 1 | df_id$BoundaryHit == T)[1]
+  
+  if(length(dead_index) > 0 & !is.na(dead_index)) {
+    df_id <- df_id[1:(dead_index-1), ]
+  }
+  
+  df_id <- subset(df_id, BirdDead != 1)
+  return(df_id)
 }
 
 

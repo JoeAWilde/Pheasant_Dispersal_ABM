@@ -133,12 +133,12 @@ for(ss in c("A", "B", "D")) {
   ### merge the hedges and woodland to make trimmed hedges and edges and save ####
   trim_hedges_edges_rast <- merge(wood_rast, trim_hedges_rast)
   writeRaster(trim_hedges_edges_rast, paste0("outputs/script_4/APHA outputs/site ", ss,
-                                        "/site ", ss, " cropped trimmed hedges_edges raster.tif"), overwrite = T)
+                                             "/site ", ss, " cropped trimmed hedges_edges raster.tif"), overwrite = T)
   
   ### create a raster of the distance to trimmed hedges and edges and save####
   trim_he_dist <- distance(trim_hedges_edges_rast)
   writeRaster(trim_he_dist, paste0("outputs/script_4/APHA outputs/site ", ss,
-                              "/site ", ss, " cropped trimmed hedges_edges distance raster.tif"), overwrite = T)
+                                   "/site ", ss, " cropped trimmed hedges_edges distance raster.tif"), overwrite = T)
   
   
   ## Feeders ####
