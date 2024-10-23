@@ -10,22 +10,28 @@ library(ggblend)
 
 CRS_used <- "EPSG:27700"
 
-for(ss in c("A", "B")){
-# for(ss in c("B")){
-  sim_df <- readRDS("outputs/script_6/APHA output/simulation_data_pen at night 3.rds") %>%
-    filter(site == ss) %>%
-    mutate(month = month.name[month(DateTime)],
+for(ss in c("A", "B", "D")){
+  sim_df <- readRDS("outputs/script_6/APHA output/simulation_data_kde_woodland.rds") %>%
+    # filter(site == ss) %>%
+    mutate(month = month.name[month(DateTime)]) %>%
+    group_by(id) %>%
+    mutate(
            dist_from_pen = sqrt(x^2 + y^2), 
-           sl_ = sqrt(((x - lag(x))^2 + (y - lag(y))^2)))
+           sl_ = sqrt(((x - lag(x))^2 + (y - lag(y))^2))) %>%
+    ungroup()
   
   real_df <- readRDS("data/Data for Exeter - anonymised GPSV2/combined_current_tracks.rds") %>%
     filter(site == ss) %>%
     mutate(
       DateTime = ymd_hms(DateTime), 
-      month = month.name[month(DateTime)],
+      month = month.name[month(DateTime)]) %>%
+    group_by(ID) %>%
+    mutate(
       dist_from_pen = sqrt(X_coord^2 + Y_coord^2), 
       sl_ = sqrt(((X_coord - lag(X_coord))^2 + (Y_coord - lag(Y_coord))^2))
-    )
+    ) %>%
+    ungroup()
+  
   
   for(m in month.name) {
     mth_sim <- subset(sim_df, month == m)
@@ -60,7 +66,8 @@ for(ss in c("A", "B")){
     sim_group = rep_len(c(1:50, NA), 51*9),
     data_type = rep_len(c(rep_len("sim", 50), "real"), 51*9),
     count = rep_len(0, 51*9),
-    prop = rep_len(0, 51*9)
+    prop = rep_len(0, 51*9), 
+    no_birds = 0
   )
   
   pb <- progress_bar$new(total = nrow(count_df), format = "[:bar] :percent eta::eta", 
@@ -84,6 +91,9 @@ for(ss in c("A", "B")){
         count_df$prop[i] <- count_df$count[i] / length(which(sub_sim_df$month == count_df$month[i]))
       }
       
+      count_df$no_birds[i] <- length(unique(sub_sim_df$id[sub_sim_df$month == count_df$month[i]]))
+      count_df$no_fixes[i] <- nrow(sub_sim_df[sub_sim_df$month == count_df$month[i], ])
+      
     } else {
       if(count_df$dist_from_pen_band[i] != 2000) {
         count_df$count[i] <- length(which(real_df$dist_from_pen > count_df$dist_from_pen_band[i] & 
@@ -95,6 +105,8 @@ for(ss in c("A", "B")){
                                             real_df$month == count_df$month[i]))
         count_df$prop[i] <- count_df$count[i] / length(which(real_df$month == count_df$month[i]))
       }
+      count_df$no_birds[i] <- alive_df$no_alive_real[alive_df$month == count_df$month[i]]
+      count_df$no_fixes[i] <- nrow(real_df[real_df$month == count_df$month[i], ])
     }
     pb$tick()
   }
@@ -103,39 +115,34 @@ for(ss in c("A", "B")){
     filter(month %in% unique(real_df$month)) %>%
     mutate(month = factor(month, levels = month.name[c(7:12, 1:6)]), 
            prop = if_else(is.na(prop), 0, prop))
-  
-  for(i in 1:nrow(count_small)) {
-    count_small$dist_from_pen_str[i] <- ifelse(
-      count_small$dist_from_pen_band[i] == 2000, 
-      paste0(count_small$dist_from_pen_band[i], "m+"), 
-      paste0(count_small$dist_from_pen_band[i], " - ", count_small$dist_from_pen_band[i+11], 
-             "m")
-    )
-  }
-  
-  count_small$dist_from_pen_str <- factor(count_small$dist_from_pen_str, 
-                                          levels = c("0 - 250m", "250 - 500m", "500 - 750m",
-                                                     "750 - 1000m", "1000 - 1250m",
-                                                     "1250 - 1500m","1500 - 1750m",
-                                                     "1750 - 2000m", "2000m+"))
+
+
   
   sim_count <- count_small[count_small$data_type == "sim",]
   
   summ_count <- sim_count %>%
     group_by(dist_from_pen_band, month) %>%
-    summarise(mean_count = mean(count), 
+    mutate(mean_count = mean(count), 
               max_count = max(count), 
               min_count = min(count), 
               sd_count = sd(count),
               mean_prop = mean(prop), 
               min_prop = min(prop), 
               max_prop = max(prop), 
-              sd_prop = sd(prop))%>%
-    ungroup()
+              sd_prop = sd(prop), 
+              mean_birds = mean(no_birds), 
+              sd_birds = sd(no_birds))%>%
+    ungroup() %>%
+    group_by(month) %>%
+    mutate(no_fixes = sum(no_fixes)) %>%
+    ungroup() %>%
+    select(-sim_group, -count, -prop, -no_birds) %>%
+    distinct(month, dist_from_pen_band, .keep_all = T)
   
   final_df <- rbind(summ_count %>%
-                      mutate(data_type = "sim"), count_small[count_small$data_type == "real",] %>%
-                      select(month, dist_from_pen_band, count, prop) %>%
+                      mutate(data_type = "sim"),
+                    count_small[count_small$data_type == "real",] %>%
+                      select(month, dist_from_pen_band, count, prop, no_birds, no_fixes) %>%
                       rename(mean_count = count, 
                              mean_prop = prop) %>%
                       mutate(min_count = NA, #
@@ -144,23 +151,23 @@ for(ss in c("A", "B")){
                              min_prop = NA,
                              max_prop = NA,
                              sd_prop = NA, 
-                             data_type = "real")) %>%
+                             data_type = "real") %>%
+                      group_by(dist_from_pen_band, month) %>%
+                      mutate(mean_birds = mean(no_birds), 
+                             sd_birds = NA) %>%
+                      ungroup() %>%
+                      select(-no_birds)) %>%
     arrange(dist_from_pen_band, month)
   
-  for(i in 1:nrow(final_df)) {
-    final_df$dist_from_pen_str[i] <- ifelse(
-      final_df$dist_from_pen_band[i] == 2000, 
-      paste0(final_df$dist_from_pen_band[i], "m+"), 
-      paste0(final_df$dist_from_pen_band[i], " - ", final_df$dist_from_pen_band[i+16], 
-             "m")
-    )
-  }
+  # for(i in 1:nrow(final_df)) {
+  #   final_df$dist_from_pen_str[i] <- ifelse(
+  #     final_df$dist_from_pen_band[i] == 2000, 
+  #     paste0(final_df$dist_from_pen_band[i], "m+"), 
+  #     paste0(final_df$dist_from_pen_band[i], " - ", final_df$dist_from_pen_band[i+16], 
+  #            "m")
+  #   )
+  # }
   
-  final_df$dist_from_pen_str <- factor(final_df$dist_from_pen_str, 
-                                       levels = c("0 - 250m", "250 - 500m", "500 - 750m",
-                                                  "750 - 1000m", "1000 - 1250m",
-                                                  "1250 - 1500m","1500 - 1750m",
-                                                  "1750 - 2000m", "2000m+"))
   
   final_df <- final_df %>%
     mutate(sd_low_count = if_else(mean_count - sd_count < 0, 0, mean_count - sd_count), 
@@ -168,38 +175,45 @@ for(ss in c("A", "B")){
            sd_low_prop = if_else(mean_prop - sd_prop < 0, 0, mean_prop - sd_prop), 
            sd_high_prop = mean_prop + sd_prop)
   
+  real_data <- final_df[final_df$data_type == "real",]
   
+  saveRDS(real_data, paste0("shiny_app/summarised tracking data/APHA data/site ", 
+                            ss, "summarised tracking data.rds"))
   
-  p1 <- ggplot(data = final_df) +
-    geom_col(aes(x = dist_from_pen_str, y = mean_count, fill = data_type,
-                 group = data_type), position = position_dodge()) + 
-    geom_errorbar(aes(x = dist_from_pen_str, ymin=sd_low_count, ymax=sd_high_count,
-                      group = data_type),
-                  position="dodge") +
-    geom_point(aes(x = dist_from_pen_str, y = min_count, group = data_type), shape = 1, position = position_dodge(width=0.9)) + 
-    geom_point(aes(x = dist_from_pen_str, y = max_count, group = data_type), shape = 1, position = position_dodge(width=0.9)) + 
-    scale_y_continuous(name = "Number of fixes") + 
-    scale_x_discrete(name = "Distance from Pen (m)") + 
-    scale_fill_manual(name = "Data type", values = c("navy", "orange3")) + 
-    theme_classic() + 
-    facet_wrap(vars(month))
-  p1
+  sim_data <- final_df[final_df$data_type == "sim",]
   
-  ggsave(p1, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_counts_pen at night 3.png"), units = "px", height = 4320, width = 7980)
+  saveRDS(sim_data, "shiny_app/summarised simulation data/kde_woodland_sim.rds")
   
-  p2 <- ggplot(data = final_df) +
-    geom_col(aes(x = dist_from_pen_str, y = mean_prop, fill = data_type,
-                 group = data_type), position = position_dodge()) + 
-    geom_errorbar(aes(x = dist_from_pen_str, ymin=sd_low_prop, ymax=sd_high_prop,
-                      group = data_type),
-                  position="dodge") +
-    geom_point(aes(x = dist_from_pen_str, y = min_prop, group = data_type), shape = 1, position = position_dodge(width=0.9)) + 
-    geom_point(aes(x = dist_from_pen_str, y = max_prop, group = data_type), shape = 1, position = position_dodge(width=0.9)) + 
-    scale_y_continuous(name = "Proportion of fixes") + 
-    scale_x_discrete(name = "Distance from Pen (m)") + 
-    scale_fill_manual(name = "Data type", values = c("navy", "orange3")) + 
-    theme_classic() + 
-    facet_wrap(vars(month))
-  p2
-  ggsave(p2, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_prop_pen at night 3.png"), units = "px", height = 4320, width = 7980)
+  # p1 <- ggplot(data = final_df) +
+  #   geom_col(aes(x = dist_from_pen_str, y = mean_count, fill = data_type,
+  #                group = data_type), position = position_dodge()) + 
+  #   geom_errorbar(aes(x = dist_from_pen_str, ymin=sd_low_count, ymax=sd_high_count,
+  #                     group = data_type),
+  #                 position="dodge") +
+  #   geom_point(aes(x = dist_from_pen_str, y = min_count, group = data_type), shape = 1, position = position_dodge(width=0.9)) + 
+  #   geom_point(aes(x = dist_from_pen_str, y = max_count, group = data_type), shape = 1, position = position_dodge(width=0.9)) + 
+  #   scale_y_continuous(name = "Number of fixes") + 
+  #   scale_x_discrete(name = "Distance from Pen (m)") + 
+  #   scale_fill_manual(name = "Data type", values = c("navy", "orange3")) + 
+  #   theme_classic() + 
+  #   facet_wrap(vars(month))
+  # p1
+  # 
+  # ggsave(p1, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_counts_kde_woodland.png"), units = "px", height = 4320, width = 7980)
+  # 
+  # p2 <- ggplot(data = final_df) +
+  #   geom_col(aes(x = dist_from_pen_str, y = mean_prop, fill = data_type,
+  #                group = data_type), position = position_dodge()) + 
+  #   geom_errorbar(aes(x = dist_from_pen_str, ymin=sd_low_prop, ymax=sd_high_prop,
+  #                     group = data_type),
+  #                 position="dodge") +
+  #   geom_point(aes(x = dist_from_pen_str, y = min_prop, group = data_type), shape = 1, position = position_dodge(width=0.9)) + 
+  #   geom_point(aes(x = dist_from_pen_str, y = max_prop, group = data_type), shape = 1, position = position_dodge(width=0.9)) + 
+  #   scale_y_continuous(name = "Proportion of fixes") + 
+  #   scale_x_discrete(name = "Distance from Pen (m)") + 
+  #   scale_fill_manual(name = "Data type", values = c("navy", "orange3")) + 
+  #   theme_classic() + 
+  #   facet_wrap(vars(month))
+  # p2
+  # ggsave(p2, filename = paste0("outputs/script_9/APHA data/site ", ss, "/distance_prop_kde_woodland.png"), units = "px", height = 4320, width = 7980)
 }

@@ -9,29 +9,23 @@ source("code/functions/UKCEH_functions.R")
 
 # load in data ####
 
-df <- readRDS("outputs/script_6/APHA output/simulation_data.rds") %>%
-  filter(id == 3 & site == "B")
+df <- readRDS("outputs/PA sites/script_6/Ex0simulation_data.rds") %>%
+  filter(month(DateTime) == 9 & id %in% 1:10)
 
-hab <- rast("outputs/script_4/APHA outputs/site B/site B cropped habitat raster.tif") %>%
+# df <- readRDS("outputs/script_6/APHA output/simulation_data_kde_woodland.rds") %>%
+#   filter(id == 1 & site == "A" & month(DateTime) == 7)
+
+hab <- rast("outputs/PA sites/script_4/Ex0 cropped habitat raster.tif") %>%
   ifel(. == 0, NA, .)
 
-pen_pts <- read.table("data/Data for Exeter - anonymised LandscapeV2/Site B/Site B_Release Pen Coordinate data.csv", 
-                      sep = ",", header = TRUE) %>%
-  dplyr::select(X, Y)
-# Ensure the loop is closed
-if(any(pen_pts[nrow(pen_pts), ] != pen_pts[1, ])) {
-  pen_pts <- rbind(pen_pts, pen_pts[1, ])
-}
-# Convert to sf, specifying the CRS if known
-pen_sf <- st_as_sf(pen_pts, coords = c("X", "Y"), crs = "EPSG:27700")
-# Convert to LINESTRING
-pen_line <- st_sfc(st_linestring(as.matrix(pen_pts)), crs = "EPSG:27700")
-pen <- vect(st_cast(pen_line, "POLYGON", crs = "EPSG:27700")) %>%
-  st_as_sf()
+pen <- st_read("outputs/PA sites/script_3/Ex0_pen_shapefile.shp")
 
 
-feeder_pts <- read.csv("data/Data for Exeter - anonymised LandscapeV2/Site B/Site B Hopper_Feeder Location Data.csv") %>%
-  vect(., geom = c("X", "Y"), crs = "EPSG:27700") 
+feeder_pts <- st_read("outputs/PA sites/script_3/Ex0_feeders_shapefile.shp")
+
+PAs <- st_read("data/Protected Areas/All_UK_PAs.shp") %>%
+  st_transform(crs = "EPSG:27700") %>%
+  st_crop(., st_buffer(pen, crs = "EPSG:27700", dist = 10000))
 
 # build up the plot ####
 
@@ -46,7 +40,7 @@ p1 <- ggplot() +
   
   ## Add release pen and feeder locations
   geom_sf(data = pen, aes(colour = "Pen", fill = "Pen"), show.legend = F) +
-  geom_spatvector(data = feeder_pts, aes(colour = "Feeders"), size = 20, alpha = 0.4) +
+  # geom_spatvector(data = feeder_pts, aes(colour = "Feeders"), size = 20/8, alpha = 0.4) +
   
   scale_colour_manual(name = expression("POIs"), values =c("Pen" = "white",
                                                            "Feeders" = "red")) +
@@ -55,31 +49,34 @@ p1 <- ggplot() +
   new_scale_color() + 
   ## Add home ranges
   
-  geom_path(data = df, aes(x = x, y = y, colour = DayNight, group = id), linewidth = 10, alpha = 0.5) + 
-  geom_point(data = df, aes(x = x, y = y, colour = DayNight, group = id), size = 20) + 
+  geom_path(data = df, aes(x = x, y = y, colour = DayNight, group = id), linewidth = 1, alpha = 0.7) + 
+  geom_point(data = df, aes(x = x, y = y, colour = DayNight, group = id), size = 2) + 
   scale_colour_manual(name = "Time of day", values = c("turquoise", "navy")) + 
   
-  annotation_north_arrow(which_north = "grid", height = unit(10, "cm"),
-                         width = unit(10, "cm"), aes(location = "tr"),
-                         pad_x = unit(6, "cm"), pad_y = unit(6, "cm"),) +
-  annotation_scale(height = unit(2, "cm"), pad_x = unit(20, "cm"),
-                   pad_y = unit(6, "cm"), text_cex = 10) +
+  geom_sf(data = PAs, fill = "transparent", linetype = "dashed") + 
   
-  
+  # annotation_north_arrow(which_north = "grid", height = unit(10/8, "cm"),
+  #                        width = unit(10/8, "cm"), aes(location = "tr"),
+  #                        pad_x = unit(6/8, "cm"), pad_y = unit(6/8, "cm"),) +
+  # annotation_scale(height = unit(2/8, "cm"), pad_x = unit(20/8, "cm"),
+  #                  pad_y = unit(6/8, "cm"), text_cex = 10/8) +
+
+
   ## set theme
-  theme_light(base_size = 130) +
-  theme(legend.key.width = unit(6, "cm")) +
+  theme_light(base_size = 10) +
+  theme(legend.key.size = unit(0.01, "cm"), 
+        legend.key.width = unit(0.1, "cm")) +
   scale_y_continuous(name = "Distance from release pen (m)", breaks = NULL, limits = c(min(df$y)-100, max(df$y)+100)) +
   scale_x_continuous(name = "Distance from release pen (m)", breaks = NULL, limits = c(min(df$x)-500, max(df$x)+500)) +
   coord_sf(datum = pull_crs(hab))
 
-# ggsave(p1, filename = "outputs/animated tracks/static_test.png", 
-#        units = "px", height = 4320, width = 7980)
+# ggsave(p1, filename = "outputs/animated tracks/static_test.png",
+#        units = "px", height = 790, width = 980)
 
 anim <- p1 +
   transition_reveal(df$DateTime) +
   ggtitle("Date: {frame_along}")
 
-animate(anim, nframes = nrow(df), fps = 4, height = 6320, width =7980)
+animate(anim, nframes = 24*30, fps = 8, height = 790, width = 980)
 
-anim_save(filename = "site_B_id_3.gif", path = "outputs/animated tracks")
+anim_save(filename = "Ex0_sept.gif", path = "outputs/animated tracks")

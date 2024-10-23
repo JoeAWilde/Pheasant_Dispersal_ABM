@@ -2,29 +2,28 @@ library(tidyverse)
 library(progress)
 library(doSNOW)
 library(sf)
-for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
-  if(ss == "Ex250") pb <- progress_bar$new(total = 4,
-                                               format = "[:bar] :percent eta::eta",
-                                               clear = F); pb$tick(0)
 
-  sim_files <- list.files(paste0("outputs/PA sites/script_5/"))[
-    which(grepl(ss, list.files(paste0("outputs/PA sites/script_5/"))))
-  ]
+root <- "outputs/PA sites/script_5/"
+
+site_prefix <- "Go"
+
+sites <- paste0(site_prefix, c(0, 250, 500, 1000, 2000))
+
+for(ss in sites) {
+  if(ss == sites[1]) pb <- progress_bar$new(total = length(sites),
+                                            format = "[:bar] :percent eta::eta",
+                                            clear = F); pb$tick(0)
   
-  for(i in sim_files) {
-    df_id <- readRDS(paste0("outputs/PA sites/script_5/", i))
-    
-    if(i == sim_files[1]) {
-      all_df <- df_id
-    } else {
-      all_df <- rbind(all_df, df_id)
-    }
-  }
-    pb$tick()
+  sim_files <- paste0(root, list.files(root)) %>%
+    .[grepl(ss, .)]
+
+  all_df <- lapply(sim_files, readRDS) %>%
+    do.call(rbind, .)
   saveRDS(all_df, paste0("outputs/PA sites/script_6/", ss, "simulation_data.rds"))
+  pb$tick()
 }
 
-for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
+for(ss in sites) {
   all_sites_df <- readRDS(paste0("outputs/PA sites/script_6/", ss, "simulation_data.rds"))
   
   PAs <- st_read("data/Protected Areas/All_UK_PAs.shp") %>%
@@ -50,7 +49,7 @@ for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
     month = rep_len(rep(month.name, each = 9), 100*12*9),
     data_type = "sim",
     no_sites = length(unique(sim_df$site)),
-    sites = paste0("Exmoor ", ss, "m away from PA boundary"),
+    sites = paste0("Gormire ", ss, "m away from PA boundary"),
     sd_birds = NA,
     max_fixes = NA,
     min_fixes = NA,
@@ -137,13 +136,18 @@ for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
     saveRDS(sum_df[i,], filename)
   }
   
-  files_to_read <- list.files("outputs/PA sites/script_6/summarised data loop output/")
+  root <- "outputs/PA sites/script_6/summarised data loop output/"
+  files_to_read <- paste0(root, list.files(root)) %>%
+    .[grepl(ss, .)]
   
-  for(fn in 1:length(files_to_read)) {
-    
-    sum_df[fn, ] <- readRDS(paste0("outputs/PA sites/script_6/summarised data loop output/", 
-                                   files_to_read[fn]))
-  }
+  sum_df <- lapply(files_to_read, readRDS) %>%
+    do.call(rbind , .)
+  
+  # for(fn in 1:length(files_to_read)) {
+  #   
+  #   sum_df[fn, ] <- readRDS(paste0("outputs/PA sites/script_6/summarised data loop output/", 
+  #                                  files_to_read[fn]))
+  # }
   
   
   summ_fixes <- sum_df %>%
@@ -155,11 +159,7 @@ for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
            mean_prop_1 = mean(mean_prop, na.rm = T), 
            min_prop = min(mean_prop, na.rm = T), 
            max_prop = max(mean_prop, na.rm = T), 
-           sd_prop = sd(mean_prop, na.rm = T), 
-           mean_birdhours_PA = mean(monthly_birdhours_PA, na.rm = T), 
-           sd_birdhours_PA = sd(monthly_birdhours_PA, na.rm = T), 
-           min_birdhours_PA = min(monthly_birdhours_PA, na.rm = T),
-           max_birdhours_PA = max(monthly_birdhours_PA, na.rm = T)) %>%
+           sd_prop = sd(mean_prop, na.rm = T)) %>%
     select(-mean_fixes, -mean_prop) %>%
     rename(mean_fixes = mean_fixes_1, 
            mean_prop = mean_prop_1) %>%
@@ -167,7 +167,11 @@ for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
     group_by(month) %>%
     mutate(mean_monthly_fixes = mean(mean_monthly_fixes), 
            mean_birds_1 = mean(mean_birds, na.rm = T), 
-           sd_birds = sd(mean_birds, na.rm = T)) %>%
+           sd_birds = sd(mean_birds, na.rm = T), 
+           mean_birdhours_PA = mean(monthly_birdhours_PA, na.rm = T), 
+           sd_birdhours_PA = sd(monthly_birdhours_PA, na.rm = T), 
+           min_birdhours_PA = min(monthly_birdhours_PA, na.rm = T),
+           max_birdhours_PA = max(monthly_birdhours_PA, na.rm = T)) %>%
     select(-mean_birds) %>%
     rename(mean_birds = mean_birds_1) %>%
     ungroup() %>%
