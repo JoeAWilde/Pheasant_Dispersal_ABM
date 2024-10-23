@@ -12,7 +12,7 @@ library(progress)
 
 CRS_used <- "EPSG:27700"
 
-site_coords <- read_xlsx("new_sites.xlsx") %>%
+site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
   mutate(
     id = paste0(substr(Location, 1, 2), Approx_dist_from_PA)
   )
@@ -136,7 +136,8 @@ for(ss in site_coords$id) {
   
   ### create a raster of distance to feeders and save ####
   feed_dist <- distance(hab, feeders)
-  writeRaster(feed_dist, paste0("outputs/PA sites/script_4/", ss, " cropped FAKE feeder distance raster.tif"), overwrite = T)
+
+  writeRaster(feed_dist, paste0("outputs/PA sites/script_4/", ss, " cropped feeder distance raster.tif"), overwrite = T)
   rm(hedges)
   gc()
   

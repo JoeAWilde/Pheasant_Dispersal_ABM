@@ -9,19 +9,16 @@ source("code/functions/UKCEH_functions.R")
 
 # load in data ####
 
-df <- readRDS("outputs/PA sites/script_6/Ex0simulation_data.rds") %>%
+df <- readRDS("outputs/PA sites/script_6/Ex2000simulation_data.rds") %>%
   filter(month(DateTime) == 9 & id %in% 1:10)
 
-# df <- readRDS("outputs/script_6/APHA output/simulation_data_kde_woodland.rds") %>%
-#   filter(id == 1 & site == "A" & month(DateTime) == 7)
-
-hab <- rast("outputs/PA sites/script_4/Ex0 cropped habitat raster.tif") %>%
+hab <- rast("outputs/PA sites/script_4/Ex2000 cropped habitat raster.tif") %>%
   ifel(. == 0, NA, .)
 
-pen <- st_read("outputs/PA sites/script_3/Ex0_pen_shapefile.shp")
+pen <- st_read("outputs/PA sites/script_3/Ex2000_pen_shapefile.shp")
 
 
-feeder_pts <- st_read("outputs/PA sites/script_3/Ex0_feeders_shapefile.shp")
+feeder_pts <- st_read("outputs/PA sites/script_3/Ex2000_feeders_shapefile.shp")
 
 PAs <- st_read("data/Protected Areas/All_UK_PAs.shp") %>%
   st_transform(crs = "EPSG:27700") %>%
@@ -79,4 +76,4 @@ anim <- p1 +
 
 animate(anim, nframes = 24*30, fps = 8, height = 790, width = 980)
 
-anim_save(filename = "Ex0_sept.gif", path = "outputs/animated tracks")
+anim_save(filename = "Ex2000_sept.gif", path = "outputs/animated tracks")

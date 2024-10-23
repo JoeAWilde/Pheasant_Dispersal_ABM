@@ -13,7 +13,7 @@ source("code/functions/simulation function.R")
 
 CRS_used <- "EPSG:27700"
 
-site_coords <- read_xlsx("new_sites.xlsx") %>%
+site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
   mutate(id = paste0(substr(Location, 1, 2), Approx_dist_from_PA))
 sites <- site_coords$id
 
@@ -140,7 +140,7 @@ for(ss in sites[12:length(sites)]){
     short_list <- T
     hab <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped habitat raster.tif"))
     pen <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped pen distance raster.tif"))
-    feed <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped FAKE feeder distance raster.tif"))
+    feed <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped feeder distance raster.tif"))
     wood <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped wood distance raster.tif"))
     
     ## bind all covariate rasters together ####

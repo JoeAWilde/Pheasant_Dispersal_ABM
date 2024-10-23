@@ -7,7 +7,8 @@ library(readxl)
 
 CRS_used <- "EPSG:27700"
 
-site_coords <- read_xlsx("new_sites.xlsx") %>%
+
+site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
   mutate(
     site_id = paste0(substr(Location, 1, 2), Approx_dist_from_PA)
   )
@@ -18,7 +19,8 @@ ex_pen <- read.table("data/Data for Exeter - anonymised LandscapeV2/Site A/Site 
 ex_feed <- read.table("data/Data for Exeter - anonymised LandscapeV2/Site D/Site D Hopper_Feeder Location Data.csv", 
                       sep = ",", header = T)
 
-# for(i in 1:nrow(site_coords)) {
+for(i in 1:nrow(site_coords)) {
+
   if(i == 1) {
     pb <- progress_bar$new(total = nrow(site_coords), format = "[:bar] :percent eta::eta", clear = F)
     pb$tick(0)

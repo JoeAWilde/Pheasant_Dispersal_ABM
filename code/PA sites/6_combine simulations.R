@@ -5,7 +5,7 @@ library(sf)
 
 root <- "outputs/PA sites/script_5/"
 
-site_prefix <- "Go"
+site_prefix <- "No"
 
 sites <- paste0(site_prefix, c(0, 250, 500, 1000, 2000))
 
@@ -49,7 +49,7 @@ for(ss in sites) {
     month = rep_len(rep(month.name, each = 9), 100*12*9),
     data_type = "sim",
     no_sites = length(unique(sim_df$site)),
-    sites = paste0("Gormire ", ss, "m away from PA boundary"),
+    sites = paste0(ss, "m away from PA boundary"),
     sd_birds = NA,
     max_fixes = NA,
     min_fixes = NA,
