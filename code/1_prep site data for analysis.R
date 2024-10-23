@@ -95,6 +95,16 @@ he_dist <- distance(hedges_edges_rast)
 writeRaster(he_dist, "outputs/script_1/ATLAS outputs/cropped hedges_edges distance raster.tif", overwrite = T)
 
 
+## Edges of fields ####
+field_edges <- ifel(hab %in% 3:4, 1, NA) %>%
+  as.polygons(., dissolve = TRUE) %>%
+  .[!is.na(values(.)), ] %>%
+  st_as_sf(.) %>%
+  st_boundary(.)
+
+field_edges_dist <- distance(hab, field_edges)
+writeRaster(field_edges_dist, "outputs/script_1/ATLAS outputs/cropped field_edges distance raster.tif", overwrite = T)
+
 ## Feeders ####
 
 ### load in the feeder points and convert to shapefile ####
@@ -220,6 +230,16 @@ for(ss in c("A", "B", "D")) {
   writeRaster(he_dist, paste0("outputs/script_1/APHA outputs/site ", ss,
                               "/site ", ss, " cropped hedges_edges distance raster.tif"), overwrite = T)
   
+  ## Edges of fields ####
+  field_edges <- ifel(hab %in% 3:4, 1, NA) %>%
+    as.polygons(., dissolve = TRUE) %>%
+    .[!is.na(values(.)), ] %>%
+    st_as_sf(.) %>%
+    st_boundary(.)
+  
+  field_edges_dist <- distance(hab, field_edges)
+  writeRaster(field_edges_dist, paste0("outputs/script_1/APHA outputs/site ", ss,
+                                       "/site ", ss, " cropped field_edges distance raster.tif"), overwrite = T)
   
   ## Feeders ####
   
