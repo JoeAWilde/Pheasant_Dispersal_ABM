@@ -141,6 +141,17 @@ for(ss in c("A", "B", "D")) {
                                    "/site ", ss, " cropped trimmed hedges_edges distance raster.tif"), overwrite = T)
   
   
+  ## Edges of fields ####
+  field_edges <- ifel(hab %in% 3:4, 1, NA) %>%
+    as.polygons(., dissolve = TRUE) %>%
+    .[!is.na(values(.)), ] %>%
+    st_as_sf(.) %>%
+    st_boundary(.)
+  
+  field_edges_dist <- distance(hab, field_edges)
+  writeRaster(field_edges_dist, paste0("outputs/script_4/APHA outputs/site ", ss,
+                                       "/site ", ss, " cropped field_edges distance raster.tif"), overwrite = T)
+  
   ## Feeders ####
   
   ### load in the feeder points and convert to shapefile ####

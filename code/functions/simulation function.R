@@ -23,6 +23,8 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
   feed_index <- which(grepl("FEED", toupper(names(ssf_betas))))
   pen_index <- which(grepl("PEN", toupper(names(ssf_betas))) & 
                        !grepl(":", toupper(names(ssf_betas))))
+  hedge_index <- which(grepl("HEDGES", toupper(names(ssf_betas))))
+  field_edges_index <- which(grepl("FIELD_EDGES", toupper(names(ssf_betas))))
   int_index <- which(grepl(":", toupper(names(ssf_betas))))
   sl_index <- which(grepl("SL_", toupper(names(ssf_betas))) & 
                       !grepl("LOG", toupper(names(ssf_betas))))
@@ -179,7 +181,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
           df_id$BoundaryHit[t] <- T
           break
         }
-        names(control_steps_df)[6:9] <- c("feed", "hab", "wood", "pen")
+        names(control_steps_df)[6:11] <- c("feed", "hab", "wood", "pen", "hedges", "field_edges")
         
         control_steps_df <- control_steps_df %>%
           filter(
@@ -201,6 +203,8 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
           control_steps_df <- control_steps_df %>%
             mutate(log_step_weight = pen * ssf_betas[feed_index] + 
                      pen * ssf_betas[pen_index] + 
+                     hedges * ssf_betas[hedge_index] + 
+                     field_edges * ssf_betas[field_edges_index] + 
                      sl_ * ssf_betas[sl_index] + 
                      log(sl_) * ssf_betas[log_sl_index] + 
                      cos(ta_) * ssf_betas[cos_ta_index] + 

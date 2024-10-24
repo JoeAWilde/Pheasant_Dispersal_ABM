@@ -61,13 +61,15 @@ hab <- rast("outputs/script_1/ATLAS outputs/cropped release pen habitat raster.t
 feed <- rast("outputs/script_1/ATLAS outputs/cropped feeder distance raster.tif")
 pen <- rast("outputs/script_1/ATLAS outputs/cropped pen distance raster.tif")
 wood <- rast("outputs/script_1/ATLAS outputs/cropped wood distance raster.tif")
+hedges <- rast("outputs/script_1/ATLAS outputs/cropped hedgerow distance raster.tif")
+field_edges <- rast("outputs/script_1/ATLAS outputs/cropped field_edges distance raster.tif")
 
 ## bind rasters into onto vector ####
-covs <- c(hab, feed, pen, wood)
+covs <- c(hab, feed, pen, wood, hedges, field_edges)
 
 ## extract covariate values for all steps ####
 at_stp <- extract_covariates(at_stp, covs)
-names(at_stp)[16:19] <- c("hab", "feed", "pen", "wood")
+names(at_stp)[16:21] <- c("hab", "feed", "pen", "wood", "hedges", "field_edges")
 
 
 # APHA data ####
@@ -118,6 +120,12 @@ for(site in sites) {
 
   wood <- rast(paste0("outputs/script_1/APHA outputs/site ",
                       site, "/site ", site," cropped wood distance raster.tif"))
+  
+  hedges <- rast(paste0("outputs/script_1/APHA outputs/site ",
+                      site, "/site ", site," cropped hedgerow distance raster.tif"))
+  
+  field_edges <- rast(paste0("outputs/script_1/APHA outputs/site ",
+                      site, "/site ", site," cropped field_edges distance raster.tif"))
 
   sub_stp <- ap_stp[ap_stp$site == site,]
 
@@ -129,6 +137,10 @@ for(site in sites) {
     rename(hab = ncol(.))
   sub_stp <- extract_covariates(sub_stp, wood )%>%
     rename(wood = ncol(.))
+  sub_stp <- extract_covariates(sub_stp, hedges )%>%
+    rename(hedges = ncol(.))
+  sub_stp <- extract_covariates(sub_stp, field_edges )%>%
+    rename(field_edges = ncol(.))
 
   if(site == sites[1]) {
     cov_stp <- sub_stp
@@ -165,6 +177,8 @@ m1 <- fit_issf(all_stp,
                  feed + hab + wood + 
                  # Pen attraction (Plot code below works if you take out these two terms below)
                  pen + pen:SinceRel + 
+                 
+                 hedges + field_edges + 
                  # Movement
                  sl_ + log_sl_ + cos_ta_ + 
                  # Stratum
@@ -176,7 +190,7 @@ m1 <- fit_issf(all_stp,
 summary(m1)
 
 ## save the ssf model ####
-saveRDS(m1, "outputs/script_3/iSSF_rp.rds")
+saveRDS(m1, "outputs/script_3/iSSF_field_edges.rds")
 
 ## extract coefficients and save ####
-saveRDS(summary(m1)$coefficients[, 1], "outputs/script_3/iSSF_coefficients_rp.rds")
+saveRDS(summary(m1)$coefficients[, 1], "outputs/script_3/iSSF_coefficients_field_edges.rds")

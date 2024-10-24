@@ -44,3 +44,4 @@ outputs/*
 .Rhistory
 *.Rhistory
 *.png
+*.zip

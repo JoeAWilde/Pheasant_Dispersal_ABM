@@ -37,7 +37,7 @@ ta_pars <- list(
 # iSSF parameters ####
 
 ## load in iSSF coefficients ####
-ssf_model <- readRDS("outputs/script_3/iSSF.rds")
+ssf_model <- readRDS("outputs/script_3/iSSF_field_edges.rds")
 ssf_betas <- ssf_model$model$coefficients
 
 ## extract names of coefficients ####
@@ -46,7 +46,7 @@ cov_names <- names(ssf_betas)
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 1000
+n_IDS <- 100
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + years(1), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
@@ -152,9 +152,11 @@ for(ss in sites){
     pen <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped pen distance raster.tif"))
     feed <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped feeder distance raster.tif"))
     wood <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped wood distance raster.tif"))
+    hedges <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped hedgerow distance raster.tif"))
+    field_edges <- rast(paste0("outputs/script_4/APHA outputs/site ", ss, "/site ", ss, " cropped field_edges distance raster.tif"))
     
     ## bind all covariate rasters together ####
-    covs <- c(feed, hab, wood, pen)
+    covs <- c(feed, hab, wood, pen, hedges, field_edges)
     
     wood_rast <- rast(paste0("outputs/script_4/APHA outputs/site ", ss,
                              "/site ", ss, " cropped wood raster.tif"))
@@ -173,7 +175,7 @@ for(ss in sites){
     
     ## save the simulation ####
     saveRDS(sim_df, paste0("outputs/script_5/APHA output/site ",
-                           ss, "/", id, "_sim_output_site_", ss, "inside_feeding.rds"))
+                           ss, "/", id, "_sim_output_site_", ss, "field_edges.rds"))
     rm(sim_df)
   }; stopCluster(cl)
 }
