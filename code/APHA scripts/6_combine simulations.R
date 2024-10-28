@@ -2,17 +2,16 @@ library(tidyverse)
 library(progress)
 library(doSNOW)
 library(sf)
-for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
-  if(ss == "Ex250") pb <- progress_bar$new(total = 4,
-                                               format = "[:bar] :percent eta::eta",
-                                               clear = F); pb$tick(0)
-
-  sim_files <- list.files(paste0("outputs/PA sites/script_5/"))[
-    which(grepl(ss, list.files(paste0("outputs/PA sites/script_5/"))))
-  ]
+for(ss in c("D")) {
+  # if(ss == "Ex250") pb <- progress_bar$new(total = 4,
+  #                                              format = "[:bar] :percent eta::eta",
+  #                                              clear = F); pb$tick(0)
+  root <- paste0("outputs/script_5/APHA output/site ", ss, "/")
+  sim_files <- list.files(root) %>%
+    .[grepl(ss, .) & grepl("field_edges", .)]
   
   for(i in sim_files) {
-    df_id <- readRDS(paste0("outputs/PA sites/script_5/", i))
+    df_id <- readRDS(paste0(root, i))
     
     if(i == sim_files[1]) {
       all_df <- df_id
@@ -20,16 +19,12 @@ for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
       all_df <- rbind(all_df, df_id)
     }
   }
-    pb$tick()
-  saveRDS(all_df, paste0("outputs/PA sites/script_6/", ss, "simulation_data.rds"))
+    # pb$tick()
+  saveRDS(all_df, paste0("outputs/script_6/APHA output/", ss, "simulation_data_field_edges.rds"))
 }
 
-for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
-  all_sites_df <- readRDS(paste0("outputs/PA sites/script_6/", ss, "simulation_data.rds"))
-  
-  PAs <- st_read("data/Protected Areas/All_UK_PAs.shp") %>%
-    st_transform(crs = "EPSG:27700") %>%
-    st_crop(., st_buffer(st_as_sf(all_sites_df[1,], coords = c("x", "y"), crs = "EPSG:27700"), dist = 10000))
+for(ss in c("D")) {
+  all_sites_df <- readRDS(paste0("outputs/script_6/APHA output/", ss, "simulation_data_field_edges.rds"))
   
   sim_df <- all_sites_df %>% 
     mutate(month = month.name[month(DateTime)]) %>%
@@ -41,16 +36,16 @@ for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
     ungroup()
   
   sum_df <- data.frame(
-    sim_group = rep_len(1:100, 100*9*12),
-    dist_from_pen_band = rep_len(seq(0, 2000, 275), 100*9*12),
+    sim_group = rep_len(1:10, 10*9*12),
+    dist_from_pen_band = rep_len(seq(0, 2000, 275), 10*9*12),
     mean_birds = 0,
     mean_fixes = 0,
     mean_monthly_fixes = 0,
     mean_prop = 0,
-    month = rep_len(rep(month.name, each = 9), 100*12*9),
+    month = rep_len(rep(month.name, each = 9), 10*12*9),
     data_type = "sim",
     no_sites = length(unique(sim_df$site)),
-    sites = paste0("Exmoor ", ss, "m away from PA boundary"),
+    sites = paste0("Site ", ss, "field_edges"),
     sd_birds = NA,
     max_fixes = NA,
     min_fixes = NA,
@@ -126,22 +121,22 @@ for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
     sum_df$mean_prop[i] <- sum_df$mean_fixes[i] / sum_df$mean_monthly_fixes[i]
     sum_df$mean_prop_total_fixes[i] <- sum_df$mean_fixes[i] / sum_df$total_fixes[i]
     
-    in_PA <- lengths(st_within(
-      st_as_sf(sub_sim_df[sub_sim_df$month == sum_df$month[i],],
-               coords = c("x", "y"), crs = "EPSG:27700"), PAs)) > 0
+    # in_PA <- lengths(st_within(
+    #   st_as_sf(sub_sim_df[sub_sim_df$month == sum_df$month[i],],
+    #            coords = c("x", "y"), crs = "EPSG:27700"), PAs)) > 0
     
-    sum_df$monthly_birdhours_PA[i] <- length(in_PA[in_PA == T])
+    # sum_df$monthly_birdhours_PA[i] <- length(in_PA[in_PA == T])
     
-    filename <- paste0("outputs/PA sites/script_6/summarised data loop output/", ss, "_", i, "_summ_data.rds")
+    filename <- paste0("outputs/script_6/APHA output/summarised data loop output/", ss, "_", i, "_summ_data.rds")
     
     saveRDS(sum_df[i,], filename)
   }
   
-  files_to_read <- list.files("outputs/PA sites/script_6/summarised data loop output/")
+  files_to_read <- list.files("outputs/script_6/APHA output/summarised data loop output/")
   
   for(fn in 1:length(files_to_read)) {
     
-    sum_df[fn, ] <- readRDS(paste0("outputs/PA sites/script_6/summarised data loop output/", 
+    sum_df[fn, ] <- readRDS(paste0("outputs/script_6/APHA output/summarised data loop output/", 
                                    files_to_read[fn]))
   }
   
@@ -176,5 +171,5 @@ for(ss in c("Ex250", "Ex500", "Ex1000", "Ex2000")) {
     select(-sim_group)
   
   saveRDS(summ_fixes, 
-          paste0("shiny_app/summarised simulation data/", ss, " summarised data.rds"))
+          paste0("outputs/script_6/APHA output/site ", ss, " summarised data_field_edges.rds"))
 }

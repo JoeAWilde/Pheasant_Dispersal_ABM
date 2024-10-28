@@ -110,7 +110,15 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
     } else {
       if(df_id$DayNight[t] == "NIGHT") {
         if(df_id$DayNight[t-1] == "DAY") {
-          kde_50_woodland <- kde_woodland(df_id[1:t-1, ], wood_rast, 0.5)
+          if(month(df_id$DateTime[t]) %in% 7:8) {
+            kde_50_woodland <- kde_woodland(df_id[1:(t-1),] %>%
+                                              filter(month(DateTime) == month(st_date) &
+                                                       DayNight == "DAY"), wood_rast, 0.25)
+          } else {
+            kde_50_woodland <- kde_woodland(df_id[1:(t-1),] %>%
+                                              filter(DayNight == "DAY"), wood_rast, 0.5)
+            
+          }
         }
         in_woods_value <- extract(kde_50_woodland, as.matrix(cbind(df_id$x[t - 1], df_id$y[t - 1])))[1, 1]
         in_woods_value <- ifelse(is.na(in_woods_value), 0, 1)

@@ -46,7 +46,7 @@ cov_names <- names(ssf_betas)
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 10
+n_IDS <- 100
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + years(1), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
@@ -175,7 +175,7 @@ for(ss in sites){
     
     ## save the simulation ####
     saveRDS(sim_df, paste0("outputs/script_5/APHA output/site ",
-                           ss, "/", id, "_sim_output_site_", ss, "kde_change.rds"))
+                           ss, "/", id, "_sim_output_site_", ss, "field_edges.rds"))
     rm(sim_df)
   }; stopCluster(cl)
 }
