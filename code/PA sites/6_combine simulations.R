@@ -26,6 +26,11 @@ sites <- paste0(site_prefix, c(0, 250, 500, 1000, 2000))
 
 # for(ss in sites) {
 ss <- sites[1]
+
+cen_pen <- st_read(paste0("outputs/PA sites/script_3/", ss, "_pen_shapefile.shp")) %>%
+  st_centroid() %>%
+  st_coordinates()
+
 all_sites_df <- readRDS(paste0("outputs/PA sites/script_6/", ss, "simulation_data.rds"))
 
 PAs <- st_read("data/Protected Areas/All_UK_PAs.shp") %>%
@@ -35,7 +40,7 @@ PAs <- st_read("data/Protected Areas/All_UK_PAs.shp") %>%
 sim_df <- all_sites_df %>% 
   group_by(id) %>%
   mutate(
-    dist_from_pen = sqrt(x^2 + y^2), 
+    dist_from_pen = sqrt(((x - cen_pen[1, 1])^2) + ((y - cen_pen[1, 2])^2)), 
     sl_ = sqrt(((x - lag(x))^2 + (y - lag(y))^2))) %>%
   ungroup() %>%
   mutate(month = month.name[month(DateTime)], 
@@ -43,13 +48,31 @@ sim_df <- all_sites_df %>%
 
 grouped_sums <- sim_df %>%
   group_by(id_group) %>%
-  mutate(total_birds_released = n_distinct(id)) %>%
+  mutate(
+    total_birds_released = n_distinct(id)
+  ) %>%
   group_by(month, .add = T) %>%
-  mutate(mean_birds = n_distinct(id),
-         mean_monthly_fixes = n(),
-         monthly_birdhours_in_PA = length(st_within(
-           st_as_sf(., coords = c("x", "y"), crs = "EPSG:27700"), PAs
-         )) > 0)
+  mutate(
+    mean_birds = n_distinct(id),
+    mean_monthly_fixes = n(), 
+    dist_from_pen_band = rep_len(seq(0, 2000, 250), n())) %>%
+  group_by(dist_from_pen_band, .add = T) %>%
+  mutate(
+    mean_fixes = case_when(
+      dist_from_pen_band == 2000 ~ sum(dist_from_pen > 2000),
+      TRUE ~ sum(dist_from_pen > dist_from_pen_band & dist_from_pen <= (dist_from_pen_band + 250))
+    )
+  ) %>%
+  ungroup() %>%
+  group_by(id_group, month) %>%
+  mutate(
+    monthly_birdhours_PA = length(lengths(st_within(st_as_sf(., coords = c("x", "y"), crs = "EPSG:27700"), PAs) > 0) == T)
+  )
+  
+  #%>%
+  # distinct(site, month, id_group, total_birds_released, mean_birds, mean_monthly_fixes, 
+  #          dist_from_pen_band, mean_fixes)
+
 
 # sum_df <- data.frame(
 #   sim_group = rep_len(1:100, 100*9*12),
