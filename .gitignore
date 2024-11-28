@@ -45,3 +45,4 @@ outputs/*
 *.Rhistory
 *.png
 *.zip
+/shiny_app/app/rsconnect

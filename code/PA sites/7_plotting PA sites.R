@@ -1,61 +1,71 @@
 library(tidyverse)
 library(RColorBrewer)
 
-df <- rbind(readRDS("PA_sites_shiny_app/app/Ex_all_PA_site_data.rds"), 
-            readRDS("PA_sites_shiny_app/app/As_all_PA_site_data.rds"))%>%
-  mutate(month = factor(month, levels = month.name[c(7:12, 1:6)])) %>%
-  arrange(sites, month, dist_from_pen_band) %>%
-  mutate(distance_str = if_else(dist_from_pen_band == 2000, "2000+", paste0(dist_from_pen_band, "-",
-                                                                            lead(dist_from_pen_band))), 
-         fixes_per_site = mean_fixes / no_sites) %>%
-  mutate(distance_str = factor(distance_str, levels = c("0-250", "250-500", "500-750",
-                                                        "750-1000", "1000-1250",
-                                                        "1250-1500","1500-1750",
-                                                        "1750-2000", "2000+"))) %>%
-  filter(month %in% month.name[c(1:2, 7:12)]) %>%
-  group_by(sites, month) %>%
-  mutate(band_area = case_when(
-    distance_str == "0-250" ~ pi*(250^2), 
-    distance_str == "250-500" ~ (pi*(500^2)) - (pi*(250^2)), 
-    distance_str == "500-750" ~ (pi*(750^2)) - (pi*(500^2)), 
-    distance_str == "750-1000" ~ (pi*(1000^2)) - (pi*(750^2)), 
-    distance_str == "1000-1250" ~ (pi*(1250^2)) - (pi*(1000^2)),
-    distance_str == "1250-1500" ~ (pi*(1500^2)) - (pi*(1250^2)), 
-    distance_str == "1500-1750" ~ (pi*(1750^2)) - (pi*(1500^2)),
-    distance_str == "1750-2000" ~ (pi*(2000^2)) - (pi*(1750^2)),
-    distance_str == "2000+" ~ (pi*(8846^2)) - (pi*(2000^2))
-  )) %>%
-  ungroup() %>%
+root <- "outputs/PA sites/script_6/summarised data/"
+site_files <- paste0(root, list.files(root))
+
+df <- lapply(site_files, readRDS) %>%
+  do.call(rbind, .) %>%
+  filter(month %in% month.name[c(1:2, 9:12)]) %>%
   mutate(
-    dist_from_PA = case_when(
-      grepl("Exmoor 0m away from PA boundary", sites) ~ 0,
-      grepl("Aston Rowant 0m away from PA boundary", sites) ~ 0,
-      grepl("250m away from PA boundary", .$sites) ~ 250, 
-      grepl("500m away from PA boundary", .$sites) ~ 500, 
-      grepl("1000m away from PA boundary", .$sites) ~ 1000, 
-      grepl("2000m away from PA boundary", .$sites) ~ 2000
-    )
-  )%>%
-  group_by(sites, month) %>%
-  mutate(
-    mean_birdhours_PA = mean(mean_birdhours_PA),
-    sd_birdhours_PA = mean(sd_birdhours_PA),
-    min_birdhours_PA = mean(min_birdhours_PA), 
-    max_birdhours_PA = mean(max_birdhours_PA),
-    sd_low_PA_birdhours = if_else(mean_birdhours_PA - sd_birdhours_PA < 0, 0, mean_birdhours_PA - sd_birdhours_PA),
-    sd_high_PA_birdhours = mean_birdhours_PA + sd_birdhours_PA
+    distance_str = if_else(dist_from_pen_band == 2000, "2000+", paste0(dist_from_pen_band, "-",
+                                                                       lead(dist_from_pen_band)))
   ) %>%
-  distinct(mean_birdhours_PA, .keep_all = T) %>%
-  filter(!month %in% c("July", "August"))
+  mutate(
+    distance_str = factor(distance_str, levels = c("0-250", "250-500", "500-750",
+                                                   "750-1000", "1000-1250",
+                                                   "1250-1500","1500-1750",
+                                                   "1750-2000", "2000+")), 
+    band_area = case_when(
+      distance_str == "0-250" ~ pi*(250^2), 
+      distance_str == "250-500" ~ (pi*(500^2)) - (pi*(250^2)), 
+      distance_str == "500-750" ~ (pi*(750^2)) - (pi*(500^2)), 
+      distance_str == "750-1000" ~ (pi*(1000^2)) - (pi*(750^2)), 
+      distance_str == "1000-1250" ~ (pi*(1250^2)) - (pi*(1000^2)),
+      distance_str == "1250-1500" ~ (pi*(1500^2)) - (pi*(1250^2)), 
+      distance_str == "1500-1750" ~ (pi*(1750^2)) - (pi*(1500^2)),
+      distance_str == "1750-2000" ~ (pi*(2000^2)) - (pi*(1750^2)),
+      distance_str == "2000+" ~ (pi*(8846^2)) - (pi*(2000^2))
+    ), 
+    dist_from_PA = case_when(
+      grepl(paste0(ss,"0"), site) ~ 0,
+      grepl(paste0(ss,"250"), .$site) ~ 250, 
+      grepl(paste0(ss,"500"), .$site) ~ 500, 
+      grepl(paste0(ss,"1000"), .$site) ~ 1000, 
+      grepl(paste0(ss,"2000"), .$site) ~ 2000
+    )
+  ) %>%
+  distinct(site, month, birdhours_in_PA, .keep_all = T) %>%
+  mutate(
+    sd_low_PA_birdhours = birdhours_in_PA - sd_birdhours_in_PA, 
+    sd_low_PA_birdhours = if_else(sd_low_PA_birdhours < 0, 0, sd_low_PA_birdhours), 
+    sd_high_PA_birdhours = birdhours_in_PA + sd_birdhours_in_PA, 
+    sd_high_PA_birdhours = if_else(sd_high_PA_birdhours < 0, 0, sd_high_PA_birdhours),
+    month = factor(month, levels = month.name[c(9:12, 1:2)]), 
+    dist_from_PA = as.numeric(substr(site, 3, 99))
+  ) %>%
+  arrange(month, dist_from_PA) 
 
+grouped_df <- df %>%
+  group_by(month, dist_from_PA) %>%
+  mutate(
+    birdhours_in_PA = mean(birdhours_in_PA), 
+    sd_low_PA_birdhours = mean(sd_low_PA_birdhours), 
+    sd_high_PA_birdhours = mean(sd_high_PA_birdhours), 
+    low_birdhours_in_PA = mean(low_birdhours_in_PA), 
+    high_birdhours_in_PA = mean(high_birdhours_in_PA)
+  ) %>%
+  ungroup() %>%
+  distinct(month, dist_from_PA, .keep_all = T)
 
-
-p1 <- ggplot(data = df) +
-  geom_line(aes(x = dist_from_PA, y = mean_birdhours_PA)) + 
-  geom_point(aes(x = dist_from_PA, y = mean_birdhours_PA), size = 3) +
-  geom_errorbar(aes(x = dist_from_PA, ymin=sd_low_PA_birdhours, ymax=sd_high_PA_birdhours)) +
-  geom_point(aes(x = dist_from_PA, y = min_birdhours_PA), shape = 1, size = 1.5) +
-  geom_point(aes(x = dist_from_PA, y = max_birdhours_PA), shape = 1, size = 1.5) +
+p1 <- ggplot(data = grouped_df) +
+  geom_line(aes(x = dist_from_PA, y = birdhours_in_PA), linetype = "dashed") + 
+  geom_point(aes(x = dist_from_PA, y = birdhours_in_PA, shape = "Mean"), size = 3) +
+  geom_errorbar(aes(x = dist_from_PA, ymin= sd_low_PA_birdhours, ymax=sd_high_PA_birdhours, linetype = "±1 SD")) +
+  geom_point(aes(x = dist_from_PA, y = low_birdhours_in_PA, shape = "Min"), size = 1.5) +
+  geom_point(aes(x = dist_from_PA, y = high_birdhours_in_PA, shape = "Max"), size = 1.5) +
+  scale_shape_manual(name = NULL, values = c("Mean" = 19, "Min" = 6, "Max" = 2)) + 
+  scale_linetype_manual(name = NULL, values = c("±1 SD" = "solid")) + 
   scale_y_continuous(name = "Birdhours spent in protected area") +
   scale_x_continuous(name = "Release pen distance from protected area boundary (m)",
                      breaks = c(0, 250, 500, 1000, 2000)) +
@@ -65,6 +75,6 @@ p1 <- ggplot(data = df) +
   facet_wrap(vars(month))
 p1
 
-ggsave(p1, filename = "outputs/PA sites/script_7/exmoor_AsRo_pa_birdhours.png", 
+ggsave(p1, filename = "outputs/PA sites/script_7/all_pa_birdhours.png", 
        height = 4320, width = 7890, units = "px")
 

@@ -123,7 +123,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
         in_woods_value <- extract(kde_50_woodland, as.matrix(cbind(df_id$x[t - 1], df_id$y[t - 1])))[1, 1]
         in_woods_value <- ifelse(is.na(in_woods_value), 0, 1)
         
-        in_woods <- ifelse(in_woods_value == 1, TRUE, FALSE)
+        in_woods <- ifelse(in_woods_value %in% c(1, 33), TRUE, FALSE)
         
         if(!in_woods) {
           control_steps_df <- data.frame(
@@ -133,7 +133,8 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
                    x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
                    y = df_id$y[t - 1] + (sl_ * sin(absta_))) %>%
             cbind(., extract(kde_50_woodland, as.matrix(cbind(.$x, .$y)))) %>%
-            rename(dist = ncol(.))
+            rename(dist = ncol(.)) %>%
+            select(-layer)
           
           min_kde_wood_dist <- which(control_steps_df$dist == min(control_steps_df$dist))
           
@@ -163,17 +164,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
           df_id$BoundaryHit[t] <- T
         }
       } else {
-        gam_eta <- sl_pars$Intercept# + 
-        # sl_pars$Time_beta * df_id$DaysSinceRel[t]
-        
-        # current_hab <- extract(covs[[2]], as.matrix(cbind(df_id$x[t-1], df_id$y[t-1])))[1, 1]
-        # 
-        # in_woods <- current_hab == 10
-        # 
-        # if(!in_woods) {
-        #   current_hab_index <- which(current_hab == sl_pars$Hab_values)
-        #   gam_eta <- gam_eta + sl_pars$Hab_betas[current_hab_index]
-        # }
+        gam_eta <- sl_pars$Intercept
         
         gam_mu <- exp(gam_eta)
         
@@ -239,6 +230,19 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
         control_steps_df$step_weight <- exp(control_steps_df$log_step_weight)
         control_steps_df$step_prob <- control_steps_df$step_weight / sum(control_steps_df$step_weight)
         
+        # ggplot() + 
+        #   # geom_spatraster(data = as.factor(hab), alpha = 0.5) +
+        #   geom_spatraster(data = feed) +
+        #   geom_point(data = control_steps_df, aes(x = x, y = y, colour = step_prob), size = 3) + 
+        #   geom_point(data = df_id[t-1, ], aes(x = x, y = y), colour = "red", size = 5) + 
+        #   geom_sf(data = pen_pts, alpha = 0.5) + 
+        #   geom_sf(data = feed_pts, colour = "white") + 
+        #   scale_colour_gradientn(colors = c(low = "purple2", high = "orange2")) #+
+        #   # scale_x_continuous(limits = c(min(control_steps_df$x) - 100,
+        #   #                               max(control_steps_df$x) + 100)) +
+        #   # scale_y_continuous(limits = c(min(control_steps_df$y) - 100,
+        #   #                               max(control_steps_df$y) + 100))
+        
         selected_index <- sample(1:nrow(control_steps_df), 1, prob = control_steps_df$step_prob)
         
         df_id$x[t] <- control_steps_df$x[selected_index]
@@ -258,6 +262,13 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
     }
   }
   
+  ggplot() + 
+    geom_spatraster(data = as.factor(hab), alpha = 0.4) + 
+    geom_path(data = df_id[df_id$x != 0,], aes(x = x, y = y, colour = SinceRel), linewidth = 3) + 
+    geom_point(data = df_id[df_id$x != 0,], aes(x = x, y = y, colour = SinceRel), size = 4) + 
+    scale_colour_gradientn(colours = c(low = "purple2", high = "orange3")) + 
+    scale_x_continuous(limits = range(df_id[df_id$x != 0, ]$x)) + 
+    scale_y_continuous(limits = range(df_id[df_id$x != 0, ]$y))
   
   dead_index <- which(df_id$birddead == 1 | df_id$BoundaryHit == T)[1]
   
