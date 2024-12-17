@@ -105,7 +105,7 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 
 
 
-for(ss in sites){
+for(ss in sites[2:length(sites)]){
   # Parallel processing set up ####
   ## create cluster of cores ####
   cl <- makeCluster(parallel::detectCores(logical = F), type = "SOCK")
@@ -156,7 +156,7 @@ for(ss in sites){
     hedges_edges <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges raster.tif"))
     hedges_edges_dist <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges distance raster.tif"))
     
-    # try({
+    try({
       ## start the simulation ####
       sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
                        dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
@@ -167,6 +167,6 @@ for(ss in sites){
       ## save the simulation ####
       saveRDS(sim_df, paste0("outputs/PA sites/script_5/", id, "_sim_output_site_", ss, "_higher_feeder_attraction.rds"))
       rm(sim_df)
-    # })
+    })
   }; stopCluster(cl)
 }
