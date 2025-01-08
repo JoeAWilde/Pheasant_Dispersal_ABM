@@ -17,8 +17,6 @@ site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
   mutate(id = paste0(substr(Location, 1, 2), Approx_dist_from_PA))
 sites <- site_coords$id
 
-# Step length and turning angle regression ####
-
 ## load in the step length parameters ####
 sl_model <- readRDS("outputs/script_2/new_step_length_pars.rds")
 
@@ -40,7 +38,7 @@ ta_pars <- list(
 # iSSF parameters ####
 
 ## load in iSSF coefficients ####
-ssf_model <- readRDS("outputs/script_3/iSSF.rds")
+ssf_model <- readRDS("outputs/script_3/iSSF_field_edges.rds")
 ssf_betas <- ssf_model$model$coefficients
 
 ## extract names of coefficients ####
@@ -51,7 +49,7 @@ cov_names <- names(ssf_betas)
 st_date <- ymd_hms("2018-07-18 07:05:00")
 n_IDS <- 1000
 fix_rate <- 60
-n_steps <- as.numeric(difftime(st_date + years(1), st_date, units = "mins")) / fix_rate
+n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
 stop_if_left <- TRUE
 dogin_dates <- as.Date(seq(st_date, st_date + months(1), by = "days"))
@@ -103,10 +101,10 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 
 
 
-for(ss in sites[12:length(sites)]){
+for(ss in sites[23:45]){
   # Parallel processing set up ####
   ## create cluster of cores ####
-  cl <- makeCluster(parallel::detectCores(logical = F)-2, type = "SOCK")
+  cl <- makeCluster(parallel::detectCores(logical = F), type = "SOCK")
   registerDoSNOW(cl)
   
   ##create progress bar for simulation loop ####
@@ -142,9 +140,11 @@ for(ss in sites[12:length(sites)]){
     pen <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped pen distance raster.tif"))
     feed <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped feeder distance raster.tif"))
     wood <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped wood distance raster.tif"))
+    hedges <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped hedgerow distance raster.tif"))
+    field_edges <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped field_edges distance raster.tif"))
     
     ## bind all covariate rasters together ####
-    covs <- c(feed, hab, wood, pen)
+    covs <- c(feed, hab, wood, pen, hedges, field_edges)
     
     wood_rast <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped wood raster.tif"))
     
@@ -152,8 +152,8 @@ for(ss in sites[12:length(sites)]){
     hedges_edges <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges raster.tif"))
     hedges_edges_dist <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges distance raster.tif"))
     
-    ## start the simulation ####
     try({
+      ## start the simulation ####
       sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
                        dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
                        st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
@@ -161,7 +161,7 @@ for(ss in sites[12:length(sites)]){
         mutate(site = ss)
       
       ## save the simulation ####
-      saveRDS(sim_df, paste0("outputs/PA sites/script_5/", id, "_sim_output_site_", ss, ".rds"))
+      saveRDS(sim_df, paste0("outputs/PA sites/script_5/", id, "_sim_output_site_", ss, "kde_change.rds"))
       rm(sim_df)
     })
   }; stopCluster(cl)

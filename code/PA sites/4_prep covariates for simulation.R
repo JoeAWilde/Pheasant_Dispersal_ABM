@@ -28,8 +28,6 @@ for(ss in site_coords$id) {
     pb$tick(0)
   }
   
-  ## Release pen ####
-  
   ### load in the release pen and convert to a closed shape ####
   pen <- st_read(paste0("outputs/PA sites/script_3/", ss, "_pen_shapefile.shp"))
   
@@ -37,20 +35,23 @@ for(ss in site_coords$id) {
   cen_pen <- st_centroid(st_geometry(pen)) %>%
     vect()
   
+  
   ## Habitat raster ####
   
   ### load in, transform, crop the habitat raster and change values to UKCEH AC list ####
   hab <- hab_uk %>%
+    subset(., 1) %>%
     crop(., buffer(cen_pen, width = 10000)) %>%
     LC_to_AC(.) %>%
     `crs<-`(CRS_used)
   
   ### save the cropped habitat raster ####
-  writeRaster(hab, paste0("outputs/PA sites/script_4/",ss, " cropped habitat raster.tif"), overwrite = T)
+  writeRaster(hab, paste0("outputs/PA sites/script_4/", ss, " cropped habitat raster.tif"), overwrite = T)
   
   ### extract the extent of the cropped habitat raster to use for other data ####
   ext <- as.polygons(hab, extent=T) %>%
     st_as_sf(.)
+  
   
   ## Distance to release pen ####
   
@@ -75,14 +76,12 @@ for(ss in site_coords$id) {
   
   ### load in and crop hedgerow data ####
   hedges <- hedges_uk %>%
-    st_crop(., ext) #%>%
-  # st_multilinestring(.) %>%
-  # vect(.)
+    st_crop(., ext) 
   
   # crs(hedges) <- CRS_used
   
   ### save cropped hedgerow shapefile ####
-  st_write(hedges, paste0("outputs/PA sites/script_4/", ss, " cropped hedgerow shapefile.shp"), append = F)
+  st_write(st_as_sf(hedges), paste0("outputs/PA sites/script_4/", ss, " cropped hedgerow shapefile.shp"), append = F)
   
   ### create a raster of distance to nearest hedgerow ####
   hedges_dist <- terra::distance(hab, hedges)
@@ -129,6 +128,16 @@ for(ss in site_coords$id) {
   writeRaster(trim_he_dist, paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges distance raster.tif"), overwrite = T)
   
   
+  ## Edges of fields ####
+  field_edges <- ifel(hab %in% 3:4, 1, NA) %>%
+    as.polygons(., dissolve = TRUE) %>%
+    .[!is.na(values(.)), ] %>%
+    st_as_sf(.) %>%
+    st_boundary(.)
+  
+  field_edges_dist <- distance(hab, field_edges)
+  writeRaster(field_edges_dist, paste0("outputs/PA sites/script_4/", ss, " cropped field_edges distance raster.tif"), overwrite = T)
+  
   ## Feeders ####
   
   ### load in the feeder points and convert to shapefile ####
@@ -136,9 +145,7 @@ for(ss in site_coords$id) {
   
   ### create a raster of distance to feeders and save ####
   feed_dist <- distance(hab, feeders)
-
-  writeRaster(feed_dist, paste0("outputs/PA sites/script_4/", ss, " cropped feeder distance raster.tif"), overwrite = T)
-  rm(hedges)
+  writeRaster(feed_dist, paste0("outputs/PA sites/script_4/", ss, " cropped FAKE feeder distance raster.tif"), overwrite = T)
   gc()
   
   pb$tick()
