@@ -1,0 +1,22 @@
+hab,type,red,green,blue
+1,Deciduous woodland,255,0,0
+2,Coniferous woodland,0,102,0
+3,Arable & Horticulture,115,38,0
+4,Improved grassland,0,255,0
+5,Neutral grassland,127,229,127
+6,Calcerous grassland,112,168,0
+7,Acid grassland,153,129,0
+8,"Fen, marsh and swamp",155,255,0
+9,Heather,128,26,128
+10,Heather grassland,230,140,166
+11,Bog,0,128,115
+12,Inland rock,210,210,255
+13,Saltwater,0,0,128
+14,Freshwater,0,0,255
+15,Supralittoral rock,204,179,0
+16,Supralittoral sediment,204,179,0
+17,Littoral rock,255,255,128
+18,Littoral sediment,255,255,128
+19,Saltmarsh,128,128,255
+20,Urban,0,0,0
+21,Suburban,128,128,128
