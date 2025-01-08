@@ -43,6 +43,10 @@ ssf_betas <- ssf_model$model$coefficients
 
 ## extract names of coefficients ####
 cov_names <- names(ssf_betas)
+exp(ssf_betas)
+## INCREASE ATTRACTION TO FEEDERS ####
+## make feeders as attractive as decid. woodland ##
+ssf_betas[which(cov_names == "feed")] <- ssf_betas[which(cov_names == "pen")]
 
 
 # Simulation parameters ####
@@ -101,7 +105,8 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 
 
 
-for(ss in sites[23:45]){
+
+for(ss in sites[1:length(sites)]){
   # Parallel processing set up ####
   ## create cluster of cores ####
   cl <- makeCluster(parallel::detectCores(logical = F), type = "SOCK")
@@ -161,7 +166,7 @@ for(ss in sites[23:45]){
         mutate(site = ss)
       
       ## save the simulation ####
-      saveRDS(sim_df, paste0("outputs/PA sites/script_5/", id, "_sim_output_site_", ss, "kde_change.rds"))
+      saveRDS(sim_df, paste0("outputs/PA sites/script_5/", id, "_sim_output_site_", ss, ".rds"))
       rm(sim_df)
     })
   }; stopCluster(cl)

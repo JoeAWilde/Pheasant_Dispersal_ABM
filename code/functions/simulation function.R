@@ -123,7 +123,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
         in_woods_value <- extract(kde_50_woodland, as.matrix(cbind(df_id$x[t - 1], df_id$y[t - 1])))[1, 1]
         in_woods_value <- ifelse(is.na(in_woods_value), 0, 1)
         
-        in_woods <- ifelse(in_woods_value == 1, TRUE, FALSE)
+        in_woods <- ifelse(in_woods_value %in% c(1, 33), TRUE, FALSE)
         
         if(!in_woods) {
           control_steps_df <- data.frame(
@@ -133,7 +133,8 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
                    x = df_id$x[t - 1] + (sl_ * cos(absta_)), 
                    y = df_id$y[t - 1] + (sl_ * sin(absta_))) %>%
             cbind(., extract(kde_50_woodland, as.matrix(cbind(.$x, .$y)))) %>%
-            rename(dist = ncol(.))
+            rename(dist = ncol(.)) %>%
+            select(-layer)
           
           min_kde_wood_dist <- which(control_steps_df$dist == min(control_steps_df$dist))
           
@@ -163,17 +164,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
           df_id$BoundaryHit[t] <- T
         }
       } else {
-        gam_eta <- sl_pars$Intercept# + 
-        # sl_pars$Time_beta * df_id$DaysSinceRel[t]
-        
-        # current_hab <- extract(covs[[2]], as.matrix(cbind(df_id$x[t-1], df_id$y[t-1])))[1, 1]
-        # 
-        # in_woods <- current_hab == 10
-        # 
-        # if(!in_woods) {
-        #   current_hab_index <- which(current_hab == sl_pars$Hab_values)
-        #   gam_eta <- gam_eta + sl_pars$Hab_betas[current_hab_index]
-        # }
+        gam_eta <- sl_pars$Intercept
         
         gam_mu <- exp(gam_eta)
         
@@ -258,7 +249,6 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
     }
   }
   
-  
   dead_index <- which(df_id$birddead == 1 | df_id$BoundaryHit == T)[1]
   
   if(length(dead_index) > 0 & !is.na(dead_index)) {
@@ -266,6 +256,7 @@ id_sim <- function(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_da
   }
   
   df_id <- subset(df_id, BirdDead != 1)
+  gc()
   return(df_id)
 }
 

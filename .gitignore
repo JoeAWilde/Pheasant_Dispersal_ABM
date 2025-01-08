@@ -46,3 +46,4 @@ outputs/*
 *.png
 *.zip
 old versions of model/
+/shiny_app/app/rsconnect

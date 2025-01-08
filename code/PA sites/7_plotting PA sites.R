@@ -47,9 +47,19 @@ df <- lapply(site_files, readRDS) %>%
   ) %>%
   arrange(month, dist_from_PA)
 
+grouped_df <- df %>%
+  group_by(month, dist_from_PA) %>%
+  mutate(
+    birdhours_in_PA = mean(birdhours_in_PA), 
+    sd_low_PA_birdhours = mean(sd_low_PA_birdhours), 
+    sd_high_PA_birdhours = mean(sd_high_PA_birdhours), 
+    low_birdhours_in_PA = mean(low_birdhours_in_PA), 
+    high_birdhours_in_PA = mean(high_birdhours_in_PA)
+  ) %>%
+  ungroup() %>%
+  distinct(month, dist_from_PA, .keep_all = T)
 
-
-p1 <- ggplot(data = df) +
+p1 <- ggplot(data = grouped_df) +
   geom_line(aes(x = dist_from_PA, y = birdhours_in_PA), linetype = "dashed") + 
   geom_point(aes(x = dist_from_PA, y = birdhours_in_PA, shape = "Mean"), size = 3) +
   geom_errorbar(aes(x = dist_from_PA, ymin= sd_low_PA_birdhours, ymax=sd_high_PA_birdhours, linetype = "±1 SD")) +
@@ -66,6 +76,6 @@ p1 <- ggplot(data = df) +
   facet_wrap(vars(month))
 p1
 
-ggsave(p1, filename = "outputs/PA sites/script_7/As_pa_birdhours.png", 
+ggsave(p1, filename = "outputs/PA sites/script_7/all_pa_birdhours.png", 
        height = 4320, width = 7890, units = "px")
 
