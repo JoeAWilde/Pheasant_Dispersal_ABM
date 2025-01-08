@@ -17,3 +17,5 @@ old versions of model/
 /data/UKCEH-2018-25m_AllUK
 /data/Woody_LinearFeatures
 data/ATLAS data/GPS data/Pheas_filtered.csv
+shiny_app/
+PA_sites_shiny_app/
