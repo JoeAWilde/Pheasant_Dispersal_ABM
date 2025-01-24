@@ -62,7 +62,7 @@ for(ss in c("A", "B", "D")) {
                      ss, "/site ", ss, " cropped release pen habitat raster.tif"))
   
   ## load in the tracking data, subsample and calculate step length and turning angle ####
-  apha_ss <- readRDS(paste0("data/APHA data (anonymised)/ GPS data/combined_current_tracks.rds")) %>%
+  apha_ss <- readRDS(paste0("data/APHA data (anonymised)/GPS data/combined_current_tracks.rds")) %>%
     filter(site == ss) %>% 
     rename(X = X_coord, 
            Y = Y_coord) %>%
