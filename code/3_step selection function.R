@@ -9,7 +9,7 @@ source("code/functions/RandomSteps.R")
 # ATLAS data ####
 
 ## load in the tracking data and subset to hourly ####
-df <- read.table("data/Pheas_filtered.csv", sep = ",", header = T) %>%
+df <- read.table("data/ATLAS data/GPS data/Pheas_filtered.csv", sep = ",", header = T) %>%
   mutate(DateTime = ymd_hms(DateTime),
          Deploydatetime = ymd_hms(Deploydatetime)) %>%
   filter(year(Deploydatetime) == "2018") %>%
@@ -76,7 +76,7 @@ names(at_stp)[16:21] <- c("hab", "feed", "pen", "wood", "hedges", "field_edges")
 sites <- c("A", "B", "D")
 
 ## load tracking data ####
-df <- readRDS("data/Data for Exeter - anonymised GPSV2/current_tracks_tod.rds") %>%
+df <- readRDS("data/APHA data (anonymised)/GPS data/current_tracks_tod.rds") %>%
   filter(tod == "DAY")
 
 ## turn into amt track ####

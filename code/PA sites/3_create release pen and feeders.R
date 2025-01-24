@@ -13,10 +13,10 @@ site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
     site_id = paste0(substr(Location, 1, 2), Approx_dist_from_PA)
   )
 
-ex_pen <- read.table("data/Data for Exeter - anonymised LandscapeV2/Site A/Site A_Release Pen Coordinate data.csv", 
+ex_pen <- read.table("data/APHA data (anonymised)/landscape data/Site A/Site A_Release Pen Coordinate data.csv", 
                      sep = ",", header = T)
 
-ex_feed <- read.table("data/Data for Exeter - anonymised LandscapeV2/Site D/Site D Hopper_Feeder Location Data.csv", 
+ex_feed <- read.table("data/APHA data (anonymised)/landscape data/Site D/Site D Hopper_Feeder Location Data.csv", 
                       sep = ",", header = T)
 
 for(i in 1:nrow(site_coords)) {
@@ -44,7 +44,7 @@ for(i in 1:nrow(site_coords)) {
   pen <- vect(st_cast(pen_line, "POLYGON", crs = CRS_used)) %>%
     st_as_sf()
   
-  st_write(pen, paste0("outputs/PA sites/script_3/", site_id, "_pen_shapefile.shp"), append = F, quiet = T)
+  st_write(pen, paste0("outputs/script_3/", site_id, "_pen_shapefile.shp"), append = F, quiet = T)
   
   ith_feeders <- ex_feed %>%
     mutate(
@@ -52,7 +52,7 @@ for(i in 1:nrow(site_coords)) {
       Y = Y + site_coords$Northing[i]
     )  %>%
     st_as_sf(., coords = c("X", "Y"), crs = CRS_used)
-  st_write(ith_feeders, paste0("outputs/PA sites/script_3/", site_id, "_feeders_shapefile.shp"), append = F, quiet = T)
+  st_write(ith_feeders, paste0("outputs/script_3/", site_id, "_feeders_shapefile.shp"), append = F, quiet = T)
   
   pb$tick()
 }

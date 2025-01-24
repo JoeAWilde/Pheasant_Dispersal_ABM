@@ -15,7 +15,7 @@ CRS_used <- "EPSG:27700"
 ## Release pen ####
 
 ### load in the release pen shapefile ####
-pen <- st_read("data/ReleasePen/ReleasePen2.shp")
+pen <- st_read("data/ATLAS data/Landscape data/ReleasePen/ReleasePen2.shp")
 
 ### find the centre of the release pen ####
 cen_pen <- st_centroid(st_geometry(pen)) %>%
@@ -60,7 +60,7 @@ writeRaster(hab_pb, "outputs/script_1/ATLAS outputs/cropped release pen habitat 
 ## Hedges ####
 
 ### load in and crop hedgerow data ####
-hedges <- st_read("data/Woody_LinearFeatures/NorthWyke_LinearFeatures.shp") %>%
+hedges <- st_read("data/Linear+Woody+Features_2393217/wlff-2016_5294765/GB_WLF_V1_0.gdb") %>%
   st_transform(., crs = CRS_used) %>%
   st_crop(x = ., y = ext)
 
@@ -108,7 +108,7 @@ writeRaster(field_edges_dist, "outputs/script_1/ATLAS outputs/cropped field_edge
 ## Feeders ####
 
 ### load in the feeder points and convert to shapefile ####
-feeders <- read.table("data/FeederCoords2017_27700.csv", sep = ",", header = T) %>%
+feeders <- read.table("data/ATLAS data/Landscape data/FeederCoords2017_27700.csv", sep = ",", header = T) %>%
   st_as_sf(., coords = c("coords.x1", "coords.x2"), crs = CRS_used)
 
 ### create a raster of distance to feeders and save ####
@@ -125,7 +125,7 @@ for(ss in c("A", "B", "D")) {
   ## Release pen ####
 
   ### load in the release pen and convert to a closed shape ####
-  pen_pts <- read.table(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ", ss,
+  pen_pts <- read.table(paste0("data/APHA data (anonymised)/landscape data/Site ", ss,
                            "/Site ", ss, "_Release Pen Coordinate data.csv"),
                     sep = ",", header = TRUE) %>%
     dplyr::select(X, Y)
@@ -148,7 +148,7 @@ for(ss in c("A", "B", "D")) {
   ## Habitat raster ####
   
   ### load in, transform, crop the habitat raster and change values to UKCEH AC list ####
-  hab <- rast(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ", ss,
+  hab <- rast(paste0("data/APHA data (anonymised)/landscape data/Site ", ss,
               "/Site ", ss, " Land Use Raster.tif")) %>%
     subset(., 1) %>%
     crop(., buffer(cen_pen, width = 10000)) %>%
@@ -188,7 +188,7 @@ for(ss in c("A", "B", "D")) {
   ## Hedges ####
   
   ### load in and crop hedgerow data ####
-  hedges <- readRDS(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ", ss,
+  hedges <- readRDS(paste0("data/APHA data (anonymised)/landscape data/Site ", ss,
                                      "/Site ", ss, " Hedgerow Data.rds")) %>%
     st_multilinestring(.) %>%
     vect(.) 
@@ -244,7 +244,7 @@ for(ss in c("A", "B", "D")) {
   ## Feeders ####
   
   ### load in the feeder points and convert to shapefile ####
-  feeders <- read.table(paste0("data/Data for Exeter - anonymised LandscapeV2/Site ",
+  feeders <- read.table(paste0("data/APHA data (anonymised)/landscape data/Site ",
                                ss, "/Site ", ss, " Hopper_Feeder Location Data.csv"),
                         sep = ",", header = T) %>%
     st_as_sf(., coords = c("X", "Y"), crs = CRS_used)

@@ -33,7 +33,7 @@ hab <- rast("outputs/script_1/ATLAS outputs/cropped release pen habitat raster.t
 
 ## load in the tracking data, subsample and calculate step length and turning angle ####
 
-atlas <- read.table("data/Pheas_filtered.csv", sep = ",", header = T) %>%
+atlas <- read.table("data/ATLAS data/GPS data/Pheas_filtered.csv", sep = ",", header = T) %>%
   select(-dist) %>%
   mutate(DateTime = ymd_hms(DateTime), 
          Deploydatetime = ymd_hms(Deploydatetime)) %>%
@@ -62,7 +62,7 @@ for(ss in c("A", "B", "D")) {
                      ss, "/site ", ss, " cropped release pen habitat raster.tif"))
   
   ## load in the tracking data, subsample and calculate step length and turning angle ####
-  apha_ss <- readRDS(paste0("data/Data for Exeter - anonymised GPSV2/combined_current_tracks.rds")) %>%
+  apha_ss <- readRDS(paste0("data/APHA data (anonymised)/ GPS data/combined_current_tracks.rds")) %>%
     filter(site == ss) %>% 
     rename(X = X_coord, 
            Y = Y_coord) %>%
