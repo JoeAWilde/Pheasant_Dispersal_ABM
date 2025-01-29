@@ -1,5 +1,5 @@
 #Script to run an integrated step-selection function to determine which habitats and other covariates dictate where the pheasants move to
-
+setwd("/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM/")
 #load required libraries
 library(tidyverse)
 library(amt)
