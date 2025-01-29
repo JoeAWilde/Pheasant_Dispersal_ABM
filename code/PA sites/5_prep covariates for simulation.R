@@ -29,7 +29,7 @@ for(ss in site_coords$id) {
   }
   
   ### load in the release pen and convert to a closed shape ####
-  pen <- st_read(paste0("outputs/script_3/", ss, "_pen_shapefile.shp"))
+  pen <- st_read(paste0("outputs/script_5/PA sites/", ss, "_pen_shapefile.shp"))
   
   ### find the center of the release pen ####
   cen_pen <- st_centroid(st_geometry(pen)) %>%
@@ -46,7 +46,7 @@ for(ss in site_coords$id) {
     `crs<-`(CRS_used)
   
   ### save the cropped habitat raster ####
-  writeRaster(hab, paste0("outputs/script_4/", ss, " cropped habitat raster.tif"), overwrite = T)
+  writeRaster(hab, paste0("outputs/script_5/PA sites/", ss, " cropped habitat raster.tif"), overwrite = T)
   
   ### extract the extent of the cropped habitat raster to use for other data ####
   ext <- as.polygons(hab, extent=T) %>%
@@ -57,7 +57,7 @@ for(ss in site_coords$id) {
   
   ### create a raster of distance to release pen and save ####
   pen_dist <- distance(hab, pen)
-  writeRaster(pen_dist, paste0("outputs/script_4/", ss, " cropped pen distance raster.tif"), overwrite = T)
+  writeRaster(pen_dist, paste0("outputs/script_5/PA sites/", ss, " cropped pen distance raster.tif"), overwrite = T)
   
   
   ## Release woodland ####
@@ -69,7 +69,7 @@ for(ss in site_coords$id) {
   
   ### merge pen buffer into the habitat raster and save ####
   hab_pb <- merge(pb_rast, hab)
-  writeRaster(hab_pb, paste0("outputs/script_4/", ss, " cropped release pen habitat raster.tif"), overwrite = T)
+  writeRaster(hab_pb, paste0("outputs/script_5/PA sites/", ss, " cropped release pen habitat raster.tif"), overwrite = T)
   
   
   ## Hedges ####
@@ -81,13 +81,13 @@ for(ss in site_coords$id) {
   # crs(hedges) <- CRS_used
   
   ### save cropped hedgerow shapefile ####
-  st_write(st_as_sf(hedges), paste0("outputs/script_4/", ss, " cropped hedgerow shapefile.shp"), append = F)
+  st_write(st_as_sf(hedges), paste0("outputs/script_5/PA sites/", ss, " cropped hedgerow shapefile.shp"), append = F)
   
   ### create a raster of distance to nearest hedgerow ####
   hedges_dist <- terra::distance(hab, hedges)
   
   ### save the distance to hedgerows raster ####
-  writeRaster(hedges_dist, paste0("outputs/script_4/", ss, " cropped hedgerow distance raster.tif"), overwrite = T)
+  writeRaster(hedges_dist, paste0("outputs/script_5/PA sites/", ss, " cropped hedgerow distance raster.tif"), overwrite = T)
   
   
   ## Hedges and edges ####
@@ -96,22 +96,22 @@ for(ss in site_coords$id) {
   wood_rast <- ifel(hab %in% 1:2, 1, NA)
   
   ### save just woodland as a raster ####
-  writeRaster(wood_rast, paste0("outputs/script_4/", ss, " cropped wood raster.tif"), overwrite = T)
+  writeRaster(wood_rast, paste0("outputs/script_5/PA sites/", ss, " cropped wood raster.tif"), overwrite = T)
   
   ### extract and save distance to woodland raster ####
   wood_dist <- distance(wood_rast)
-  writeRaster(wood_dist, paste0("outputs/script_4/", ss, " cropped wood distance raster.tif"), overwrite = T)
+  writeRaster(wood_dist, paste0("outputs/script_5/PA sites/", ss, " cropped wood distance raster.tif"), overwrite = T)
   
   ### convert the hedges shapefile into a raster ####
   hedges_rast <- rasterize(hedges, hab, res = 1000)
   
   ### merge the hedges and woodland to make hedges and edges and save ####
   hedges_edges_rast <- merge(wood_rast, hedges_rast)
-  writeRaster(hedges_edges_rast, paste0("outputs/script_4/", ss, " cropped hedges_edges raster.tif"), overwrite = T)
+  writeRaster(hedges_edges_rast, paste0("outputs/script_5/PA sites/", ss, " cropped hedges_edges raster.tif"), overwrite = T)
   
   ### create a raster of the distance to hedges and edges and save####
   he_dist <- distance(hedges_edges_rast)
-  writeRaster(he_dist, paste0("outputs/script_4/", ss, " cropped hedges_edges distance raster.tif"), overwrite = T)
+  writeRaster(he_dist, paste0("outputs/script_5/PA sites/", ss, " cropped hedges_edges distance raster.tif"), overwrite = T)
   
   
   ## Trimmed hedges and edges ####
@@ -121,11 +121,11 @@ for(ss in site_coords$id) {
   
   ### merge the hedges and woodland to make trimmed hedges and edges and save ####
   trim_hedges_edges_rast <- merge(wood_rast, trim_hedges_rast)
-  writeRaster(trim_hedges_edges_rast, paste0("outputs/script_4/", ss, " cropped trimmed hedges_edges raster.tif"), overwrite = T)
+  writeRaster(trim_hedges_edges_rast, paste0("outputs/script_5/PA sites/", ss, " cropped trimmed hedges_edges raster.tif"), overwrite = T)
   
   ### create a raster of the distance to trimmed hedges and edges and save####
   trim_he_dist <- distance(trim_hedges_edges_rast)
-  writeRaster(trim_he_dist, paste0("outputs/script_4/", ss, " cropped trimmed hedges_edges distance raster.tif"), overwrite = T)
+  writeRaster(trim_he_dist, paste0("outputs/script_5/PA sites/", ss, " cropped trimmed hedges_edges distance raster.tif"), overwrite = T)
   
   
   ## Edges of fields ####
@@ -136,16 +136,16 @@ for(ss in site_coords$id) {
     st_boundary(.)
   
   field_edges_dist <- distance(hab, field_edges)
-  writeRaster(field_edges_dist, paste0("outputs/script_4/", ss, " cropped field_edges distance raster.tif"), overwrite = T)
+  writeRaster(field_edges_dist, paste0("outputs/script_5/PA sites/", ss, " cropped field_edges distance raster.tif"), overwrite = T)
   
   ## Feeders ####
   
   ### load in the feeder points and convert to shapefile ####
-  feeders <- st_read(paste0("outputs/script_3/", ss, "_feeders_shapefile.shp"))
+  feeders <- st_read(paste0("outputs/script_5/PA sites/", ss, "_feeders_shapefile.shp"))
   
   ### create a raster of distance to feeders and save ####
   feed_dist <- distance(hab, feeders)
-  writeRaster(feed_dist, paste0("outputs/script_4/", ss, " cropped FAKE feeder distance raster.tif"), overwrite = T)
+  writeRaster(feed_dist, paste0("outputs/script_5/PA sites/", ss, " cropped FAKE feeder distance raster.tif"), overwrite = T)
   gc()
   
   pb$tick()

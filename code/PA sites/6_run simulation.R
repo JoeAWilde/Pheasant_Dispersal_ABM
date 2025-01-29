@@ -1,5 +1,5 @@
 #Script to run the dispersal simulation 
-
+setwd("/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM/")
 # load required libraries
 library(tidyverse)
 library(terra)
@@ -18,7 +18,7 @@ site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
 sites <- site_coords$id
 
 ## load in the step length parameters ####
-sl_model <- readRDS("outputs/script_2/new_step_length_pars.rds")
+sl_model <- readRDS("outputs/script_2/sl_regress_rp.rds")
 
 sl_pars <- list(
   Intercept = sl_model$estimates[1],
@@ -29,7 +29,7 @@ sl_pars <- list(
 )
 
 ## load in turning angle parameters ####
-ta_model <- readRDS("outputs/script_2/new_turning_angle_pars.rds")
+ta_model <- readRDS("outputs/script_2/ta_regress_rp.rds")
 ta_pars <- list(
   vm_mu = ta_model$estimates_angle[1], 
   vm_kappa = ta_model$estimates_angle[12]
@@ -63,7 +63,7 @@ dogin_prob <- 0.9
 # Other parameters for simulation ####
 
 ## create a dataframe of sunlight times at the centre of the pen ####
-atlas_pen_cent <- st_read("data/ReleasePen/ReleasePen2.shp") %>%
+atlas_pen_cent <- st_read("data/ATLAS data/Landscape data/ReleasePen/ReleasePen2.shp") %>%
   st_centroid(.) %>%
   st_transform(., "EPSG:4326") %>%
   st_coordinates(.)
@@ -133,7 +133,7 @@ for(ss in sites[1:length(sites)]){
     require(terra)
     require(sf)
     
-    pen_pts <- st_read(paste0("outputs/PA sites/script_3/", ss, "_pen_shapefile.shp"))
+    pen_pts <- st_read(paste0("outputs/PA sites/script_4/", ss, "_pen_shapefile.shp"))
     
     ## create the area where dogging in occurs ####
     dogin_buffer <- st_difference(st_buffer(st_geometry(pen_pts), dist = 200), pen_pts)
@@ -141,21 +141,21 @@ for(ss in sites[1:length(sites)]){
     
     ## load in covariate rasters (can't be passed to workers) ####
     short_list <- T
-    hab <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped habitat raster.tif"))
-    pen <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped pen distance raster.tif"))
-    feed <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped feeder distance raster.tif"))
-    wood <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped wood distance raster.tif"))
-    hedges <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped hedgerow distance raster.tif"))
-    field_edges <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped field_edges distance raster.tif"))
+    hab <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped habitat raster.tif"))
+    pen <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped pen distance raster.tif"))
+    feed <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped feeder distance raster.tif"))
+    wood <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped wood distance raster.tif"))
+    hedges <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped hedgerow distance raster.tif"))
+    field_edges <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped field_edges distance raster.tif"))
     
     ## bind all covariate rasters together ####
     covs <- c(feed, hab, wood, pen, hedges, field_edges)
     
-    wood_rast <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped wood raster.tif"))
+    wood_rast <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped wood raster.tif"))
     
     ## load in the hedges and egdes rasters ####
-    hedges_edges <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges raster.tif"))
-    hedges_edges_dist <- rast(paste0("outputs/PA sites/script_4/", ss, " cropped trimmed hedges_edges distance raster.tif"))
+    hedges_edges <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped trimmed hedges_edges raster.tif"))
+    hedges_edges_dist <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped trimmed hedges_edges distance raster.tif"))
     
     try({
       ## start the simulation ####
@@ -166,7 +166,7 @@ for(ss in sites[1:length(sites)]){
         mutate(site = ss)
       
       ## save the simulation ####
-      saveRDS(sim_df, paste0("outputs/PA sites/script_5/", id, "_sim_output_site_", ss, ".rds"))
+      saveRDS(sim_df, paste0("outputs/PA sites/script_6/", id, "_sim_output_site_", ss, ".rds"))
       rm(sim_df)
     })
   }; stopCluster(cl)
