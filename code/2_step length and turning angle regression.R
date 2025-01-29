@@ -1,5 +1,5 @@
 #Script to run regressions to find the distributions of step lengths and turning angles to use in the simulation
-
+setwd("/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM")
 #load required libraries
 library(tidyverse)
 library(progress)
@@ -117,17 +117,17 @@ df$hab <- factor(df$hab)
 priors <- prior(normal(0, 1), class = b) + prior(exponential(1), class = sd)
 
 ## run the regression ####
-m1 <- brm(
-  formula = bf("sl ~ hab + SinceRel + (1|ID) + (1|site)"),
-  data = df,
-  family = "gamma",
-  iter = 3000,
-  warmup = floor(3000/2),
-  chains = 4,
-  cores = 4,
+#m1 <- brm(
+#  formula = bf("sl ~ hab + SinceRel + (1|ID) + (1|site)"),
+#  data = df,
+#  family = "gamma",
+#  iter = 3000,
+#  warmup = floor(3000/2),
+#  chains = 4,
+#  cores = 4,
   # backend = "cmdstan",
-  prior = priors
-); saveRDS(m1, "outputs/script_2/sl_regress_rp.rds")
+#  prior = priors
+#); saveRDS(m1, "outputs/script_2/sl_regress_rp.rds")
 
 # Turning angle regression ####
 
