@@ -1,5 +1,10 @@
 #Script to run regressions to find the distributions of step lengths and turning angles to use in the simulation
 setwd("/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM")
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> a469a78f83540cb3f6b0e714f55d6e2567faf910
 #load required libraries
 library(tidyverse)
 library(progress)
