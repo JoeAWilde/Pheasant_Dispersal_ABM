@@ -1,7 +1,7 @@
 library(tidyverse)
 library(RColorBrewer)
 
-root <- "outputs/PA sites/script_6/summarised data/"
+root <- "outputs/script_7/summarised data/"
 ss <- "As"
 site_files <- paste0(root, list.files(root)) %>%
   .[grepl(ss, .)]
@@ -76,6 +76,6 @@ p1 <- ggplot(data = grouped_df) +
   facet_wrap(vars(month))
 p1
 
-ggsave(p1, filename = "outputs/PA sites/script_7/all_pa_birdhours.png", 
+ggsave(p1, filename = paste0("outputs/script_8/", ss, "_pa_birdhours.png"), 
        height = 4320, width = 7890, units = "px")
 
