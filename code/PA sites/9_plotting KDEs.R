@@ -16,7 +16,7 @@ source("code/functions/UKCEH_functions.R")
 
 CRS_used <- "EPSG:27700"
 ss <- "As"
-root <- "outputs/PA sites/script_6/"
+root <- "outputs/script_7/PA sites/"
 files <- paste0(root, list.files(root)) %>%
   .[grepl(ss, .)]
 ## Load in simulated movement data ####
@@ -75,7 +75,7 @@ hr_sim2000 <- site2000 %>%
   mutate(kde = map(data, hr_kde, trast = trast, levels = 0.95, h = c(25, 25)))
 
 #load in habitat data and UKCEH colours
-hab_rast <- terra::rast(paste0("outputs/PA sites/script_4/", ss, "0 cropped habitat raster.tif")) %>%
+hab_rast <- terra::rast(paste0("outputs/script_5/PA sites/", ss, "0 cropped habitat raster.tif")) %>%
   ifel(. == 0, NA, .)
 
 hab_cols <- UKCEH_colours(hab_rast, T)
@@ -85,15 +85,15 @@ PAs <- st_read("data/Protected Areas/All_UK_PAs.shp") %>%
   st_crop(., st_buffer(st_as_sf(sim_trk[1,], coords = c("x_", "y_"),
                                 crs = "EPSG:27700"), dist = 10000))
 
-pen0 <- st_read(paste0("outputs/PA sites/script_3/", ss, "0_pen_shapefile.shp")) %>%
+pen0 <- st_read(paste0("outputs/script_4/PA sites/", ss, "0_pen_shapefile.shp")) %>%
   st_centroid()
-pen250 <- st_read(paste0("outputs/PA sites/script_3/", ss, "250_pen_shapefile.shp")) %>%
+pen250 <- st_read(paste0("outputs/script_4/PA sites/", ss, "250_pen_shapefile.shp")) %>%
   st_centroid()
-pen500 <- st_read(paste0("outputs/PA sites/script_3/", ss, "500_pen_shapefile.shp")) %>%
+pen500 <- st_read(paste0("outputs/script_4/PA sites/", ss, "500_pen_shapefile.shp")) %>%
   st_centroid()
-pen1000 <- st_read(paste0("outputs/PA sites/script_3/", ss, "1000_pen_shapefile.shp")) %>%
+pen1000 <- st_read(paste0("outputs/script_4/PA sites/", ss, "1000_pen_shapefile.shp")) %>%
   st_centroid()
-pen2000 <- st_read(paste0("outputs/PA sites/script_3/", ss, "2000_pen_shapefile.shp")) %>%
+pen2000 <- st_read(paste0("outputs/script_4/PA sites/", ss, "2000_pen_shapefile.shp")) %>%
   st_centroid()
 
 ## Find the levels of the grouping factor that the real and simulated data have in common
@@ -224,7 +224,7 @@ j <- 1
   if(Facets[j] == 1) month <- 13
   if(Facets[j] == 2) month <- 14
   
-  output_path <- paste0("outputs/PA sites/script_8/pres/site_", ss, "_", month, "_homeranges_step_9.png")
+  output_path <- paste0("outputs/script_9/PA sites/site_", ss, "_", month, "_homeranges_step_9.png")
   
   png(output_path, type = "cairo", width = 7980, height = 4920)
   print(pt)

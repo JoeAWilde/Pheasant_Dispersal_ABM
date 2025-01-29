@@ -133,7 +133,7 @@ for(ss in sites[1:length(sites)]){
     require(terra)
     require(sf)
     
-    pen_pts <- st_read(paste0("outputs/PA sites/script_4/", ss, "_pen_shapefile.shp"))
+    pen_pts <- st_read(paste0("outputs/script_4/PA sites/", ss, "_pen_shapefile.shp"))
     
     ## create the area where dogging in occurs ####
     dogin_buffer <- st_difference(st_buffer(st_geometry(pen_pts), dist = 200), pen_pts)
@@ -141,21 +141,21 @@ for(ss in sites[1:length(sites)]){
     
     ## load in covariate rasters (can't be passed to workers) ####
     short_list <- T
-    hab <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped habitat raster.tif"))
-    pen <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped pen distance raster.tif"))
-    feed <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped feeder distance raster.tif"))
-    wood <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped wood distance raster.tif"))
-    hedges <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped hedgerow distance raster.tif"))
-    field_edges <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped field_edges distance raster.tif"))
+    hab <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped habitat raster.tif"))
+    pen <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped pen distance raster.tif"))
+    feed <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped feeder distance raster.tif"))
+    wood <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped wood distance raster.tif"))
+    hedges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped hedgerow distance raster.tif"))
+    field_edges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped field_edges distance raster.tif"))
     
     ## bind all covariate rasters together ####
     covs <- c(feed, hab, wood, pen, hedges, field_edges)
     
-    wood_rast <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped wood raster.tif"))
+    wood_rast <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped wood raster.tif"))
     
     ## load in the hedges and egdes rasters ####
-    hedges_edges <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped trimmed hedges_edges raster.tif"))
-    hedges_edges_dist <- rast(paste0("outputs/PA sites/script_5/", ss, " cropped trimmed hedges_edges distance raster.tif"))
+    hedges_edges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped trimmed hedges_edges raster.tif"))
+    hedges_edges_dist <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped trimmed hedges_edges distance raster.tif"))
     
     try({
       ## start the simulation ####
@@ -166,7 +166,7 @@ for(ss in sites[1:length(sites)]){
         mutate(site = ss)
       
       ## save the simulation ####
-      saveRDS(sim_df, paste0("outputs/PA sites/script_6/", id, "_sim_output_site_", ss, ".rds"))
+      saveRDS(sim_df, paste0("outputs/script_6/PA sites/", id, "_sim_output_site_", ss, ".rds"))
       rm(sim_df)
     })
   }; stopCluster(cl)

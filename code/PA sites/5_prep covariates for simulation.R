@@ -29,7 +29,7 @@ for(ss in site_coords$id) {
   }
   
   ### load in the release pen and convert to a closed shape ####
-  pen <- st_read(paste0("outputs/script_5/PA sites/", ss, "_pen_shapefile.shp"))
+  pen <- st_read(paste0("outputs/script_4/PA sites/", ss, "_pen_shapefile.shp"))
   
   ### find the center of the release pen ####
   cen_pen <- st_centroid(st_geometry(pen)) %>%
