@@ -1,3 +1,5 @@
+setwd("/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM/")
+
 library(tidyverse)
 library(progress)
 library(doSNOW)
@@ -5,7 +7,7 @@ library(sf)
 library(readxl)
 # library(plyr)
 
-root <- "outputs/PA sites/script_5/"
+root <- "outputs/PA sites/script_6/"
 
 sites <- paste0(
   substr(read_xlsx("all_PA_sites.xlsx")$Location, 1, 2), 
@@ -30,16 +32,16 @@ for(ss in sites) {
 
   all_df <- lapply(sim_files, readRDS) %>%
     do.call(rbind, .)
-  saveRDS(all_df, paste0("outputs/PA sites/script_6/", ss, "simulation_data.rds"))
+  saveRDS(all_df, paste0("outputs/script_7/", ss, "simulation_data.rds"))
   pb$tick()
 }
 
 for(ss in sites) {
-  cen_pen <- st_read(paste0("outputs/PA sites/script_3/", ss, "_pen_shapefile.shp")) %>%
+  cen_pen <- st_read(paste0("outputs/script_4/PA sites/", ss, "_pen_shapefile.shp")) %>%
     st_centroid() %>%
     st_coordinates()
   
-  all_sites_df <- readRDS(paste0("outputs/PA sites/script_6/", ss, "simulation_data.rds"))
+  all_sites_df <- readRDS(paste0("outputs/script_7/", ss, "simulation_data.rds"))
   
   PAs <- st_read("data/Protected Areas/All_UK_PAs.shp") %>%
     st_transform(crs = "EPSG:27700") %>%
@@ -102,14 +104,14 @@ for(ss in sites) {
                         sim_df$month == grouped_sums$month[i], ],
                coords = c("x", "y"), crs = "EPSG:27700"), PAs)) > 0) == T))
 
-    saveRDS(c(i, mean_fixes, birdhours_in_PA), paste0("outputs/PA sites/script_6/summarised data loop output/",
+    saveRDS(c(i, mean_fixes, birdhours_in_PA), paste0("outputs/script_7/summarised data loop output/",
                                                       ss, "_meanfix_birdhours_", i, ".rds"))
 
     pb$tick()
   }
 
   stopCluster(cl)
-  mf_bh_root <- "outputs/PA sites/script_6/summarised data loop output/"
+  mf_bh_root <- "outputs/script_7/summarised data loop output/"
   mf_bh_files <- paste0(mf_bh_root, list.files(mf_bh_root)) %>%
     .[grepl(ss, .) & grepl("meanfix", .)]
   
@@ -161,6 +163,6 @@ for(ss in sites) {
     ungroup()
   
   saveRDS(summarised,
-          paste0("outputs/PA sites/script_6/summarised data/", ss, " summarised data.rds"))
+          paste0("outputs/script_7/summarised data/", ss, " summarised data.rds"))
 }
 
