@@ -44,7 +44,7 @@ for(i in 1:nrow(site_coords)) {
   pen <- vect(st_cast(pen_line, "POLYGON", crs = CRS_used)) %>%
     st_as_sf()
   
-  st_write(pen, paste0("outputs/script_3/", site_id, "_pen_shapefile.shp"), append = F, quiet = T)
+  st_write(pen, paste0("outputs/script_4/PA sites/", site_id, "_pen_shapefile.shp"), append = F, quiet = T)
   
   ith_feeders <- ex_feed %>%
     mutate(
@@ -52,7 +52,7 @@ for(i in 1:nrow(site_coords)) {
       Y = Y + site_coords$Northing[i]
     )  %>%
     st_as_sf(., coords = c("X", "Y"), crs = CRS_used)
-  st_write(ith_feeders, paste0("outputs/script_3/", site_id, "_feeders_shapefile.shp"), append = F, quiet = T)
+  st_write(ith_feeders, paste0("outputs/script_4/PA sites/", site_id, "_feeders_shapefile.shp"), append = F, quiet = T)
   
   pb$tick()
 }
