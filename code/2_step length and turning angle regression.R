@@ -1,10 +1,6 @@
 #Script to run regressions to find the distributions of step lengths and turning angles to use in the simulation
 setwd("/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM")
-<<<<<<< HEAD
-=======
 
-
->>>>>>> a469a78f83540cb3f6b0e714f55d6e2567faf910
 #load required libraries
 library(tidyverse)
 library(progress)
@@ -144,10 +140,10 @@ m2 <- brm(
   formula = bf("ta ~ hab + SinceRel + (1|ID) + (1|site)"), 
   data = df, 
   family = von_mises(),
-  iter = 3000, 
-  warmup = (3000/2), 
+  iter = 1000, 
+  warmup = (1000/2), 
   chains = 4, 
-  cores = 4#, 
-  # backend = "cmdstan"
-); saveRDS(m1, "outputs/script_2/ta_regress_rp.rds")
+  cores = 4, 
+  backend = "cmdstan"
+); saveRDS(m2, "outputs/script_2/ta_regress_rp.rds")
 

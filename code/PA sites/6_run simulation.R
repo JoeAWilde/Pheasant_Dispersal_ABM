@@ -16,7 +16,7 @@ CRS_used <- "EPSG:27700"
 site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
   mutate(id = paste0(substr(Location, 1, 2), Approx_dist_from_PA))
 sites <- site_coords$id
-
+sites <- c("Ex0")
 ## load in the step length parameters ####
 sl_model <- readRDS("outputs/script_2/sl_regress_rp.rds")
 
@@ -51,7 +51,7 @@ ssf_betas[which(cov_names == "feed")] <- ssf_betas[which(cov_names == "pen")]
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 1000
+n_IDS <- 5
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
@@ -106,10 +106,10 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 
 
 
-for(ss in sites[1:length(sites)]){
+for(ss in sites){
   # Parallel processing set up ####
   ## create cluster of cores ####
-  cl <- makeCluster(parallel::detectCores(logical = F), type = "SOCK")
+  cl <- makeCluster(8, type = "SOCK")
   registerDoSNOW(cl)
   
   ##create progress bar for simulation loop ####
@@ -143,7 +143,7 @@ for(ss in sites[1:length(sites)]){
     short_list <- T
     hab <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped habitat raster.tif"))
     pen <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped pen distance raster.tif"))
-    feed <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped feeder distance raster.tif"))
+    feed <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped FAKE feeder distance raster.tif"))
     wood <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped wood distance raster.tif"))
     hedges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped hedgerow distance raster.tif"))
     field_edges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped field_edges distance raster.tif"))
@@ -157,7 +157,7 @@ for(ss in sites[1:length(sites)]){
     hedges_edges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped trimmed hedges_edges raster.tif"))
     hedges_edges_dist <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped trimmed hedges_edges distance raster.tif"))
     
-    try({
+    
       ## start the simulation ####
       sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
                        dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
@@ -168,6 +168,6 @@ for(ss in sites[1:length(sites)]){
       ## save the simulation ####
       saveRDS(sim_df, paste0("outputs/script_6/PA sites/", id, "_sim_output_site_", ss, ".rds"))
       rm(sim_df)
-    })
+    
   }; stopCluster(cl)
 }
