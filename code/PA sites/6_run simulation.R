@@ -8,6 +8,7 @@ library(sf)
 library(suncalc)
 library(progress)
 library(readxl)
+library(brms)
 
 source("code/functions/simulation function.R")
 
@@ -20,16 +21,21 @@ sites <- c("Ex0")
 ## load in the step length parameters ####
 sl_model <- readRDS("outputs/script_2/sl_regress_rp.rds")
 
+sl_pars <- as.data.frame(summary(sl_model)$fixed)
+
 sl_pars <- list(
-  Intercept = sl_model$estimates[1],
-  Hab_values = as.integer(substr(sl_model$est_names[2:10], 9, 11)),
-  Hab_betas = sl_model$estimates[2:10],
-  Time_beta = sl_model$estimates[11],
-  Gam_shape = sl_model$estimates[12]
+  Intercept = sl_pars$Estimate[1],
+  Hab_values = as.integer(substr(rownames(sl_pars)[2:10], 4, 6)),
+  Hab_betas = sl_pars$Estimate[2:10],
+  Time_beta = sl_pars$Estimate[11],
+  Gam_shape = sl_pars$Estimate[12]
 )
 
 ## load in turning angle parameters ####
 ta_model <- readRDS("outputs/script_2/ta_regress_rp.rds")
+
+ta_pars <- as.data.frame(summary(ta_model)$fixed)
+
 ta_pars <- list(
   vm_mu = ta_model$estimates_angle[1], 
   vm_kappa = ta_model$estimates_angle[12]
@@ -103,13 +109,11 @@ Springmort <- list(
 Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)) # probability and individual dies on a day
 
 
-
-
-
-for(ss in sites){
+# for(ss in sites){
+ss <- sites[1]
   # Parallel processing set up ####
   ## create cluster of cores ####
-  cl <- makeCluster(8, type = "SOCK")
+  cl <- makeCluster(parallel::detectCores(logical = F), type = "SOCK")
   registerDoSNOW(cl)
   
   ##create progress bar for simulation loop ####

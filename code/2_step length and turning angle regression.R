@@ -139,7 +139,7 @@ df$ta_pos <- angle_bounds_pos(df$ta)
 m2 <- brm(
   formula = bf("ta ~ hab + SinceRel + (1|ID) + (1|site)"), 
   data = df, 
-  family = von_mises(),
+  family = gaussian(),
   iter = 1000, 
   warmup = (1000/2), 
   chains = 4, 
