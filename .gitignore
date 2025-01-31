@@ -20,3 +20,16 @@ data/ATLAS data/GPS data/Pheas_filtered.csv
 shiny_app/
 PA_sites_shiny_app/
 /outputs
+data/all_new_monthly.csv
+/data/all_ranging_data
+/data/Data for Exeter - anonymised GPSV2
+data/CTsite2_fake_feeders.csv
+/data/Data for Exeter - anonymised LandscapeV2
+/data/fake Exmoor site
+data/FeederCoords2017_27700.csv
+/data/NorthWykeCEH_HabitatVector
+/data/ReleasePen
+data/uk-national-site-network-2023-10-31.xlsx
+data/Pheas_filtered.csv
+/data/UKCEH_Devon_2018
+main_model.Rproj
