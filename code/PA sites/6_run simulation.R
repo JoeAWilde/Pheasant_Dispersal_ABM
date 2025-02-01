@@ -22,13 +22,14 @@ sites <- c("Ex0")
 sl_model <- readRDS("outputs/script_2/sl_regress_rp.rds")
 
 sl_pars <- as.data.frame(summary(sl_model)$fixed)
+sl_spec_pars <- as.data.frame(summary(sl_model)$spec_pars)
 
 sl_pars <- list(
   Intercept = sl_pars$Estimate[1],
   Hab_values = as.integer(substr(rownames(sl_pars)[2:10], 4, 6)),
   Hab_betas = sl_pars$Estimate[2:10],
   Time_beta = sl_pars$Estimate[11],
-  Gam_shape = sl_pars$Estimate[12]
+  Gam_shape = sl_spec_pars$Estimate[1]
 )
 
 ## load in turning angle parameters ####
@@ -37,8 +38,8 @@ ta_model <- readRDS("outputs/script_2/ta_regress_rp.rds")
 ta_pars <- as.data.frame(summary(ta_model)$fixed)
 
 ta_pars <- list(
-  vm_mu = ta_model$estimates_angle[1], 
-  vm_kappa = ta_model$estimates_angle[12]
+  vm_mu = ta_pars$Estimate[1], 
+  vm_kappa = 1
 )
 
 # iSSF parameters ####
@@ -109,8 +110,7 @@ Springmort <- list(
 Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)) # probability and individual dies on a day
 
 
-# for(ss in sites){
-ss <- sites[1]
+for(ss in sites){
   # Parallel processing set up ####
   ## create cluster of cores ####
   cl <- makeCluster(parallel::detectCores(logical = F), type = "SOCK")

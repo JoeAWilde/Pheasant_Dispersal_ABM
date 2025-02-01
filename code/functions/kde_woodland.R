@@ -13,7 +13,7 @@ kde_woodland <- function(df, wood_rast, kde_size) {
   kde_all <- hr_kde(trk, trast = trast1, levels = kde_size, h = c(25, 25))
   kde_polygon <- hr_isopleths(kde_all)
   kde_sf <- st_as_sf(kde_polygon)
-  kde_rast <- rasterize(kde_sf, wood_rast, res = 1000) 
+  kde_rast <- rasterize(kde_sf, wood_rast) 
   
   woodland <- kde_rast * wood_rast
   
