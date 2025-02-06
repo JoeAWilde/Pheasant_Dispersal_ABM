@@ -62,10 +62,10 @@ exp(ssf_betas)
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 100
+n_IDS <- 1000
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
-n_csteps <- 250
+n_csteps <- 200
 stop_if_left <- TRUE
 
 ## !!!>>> change dogin dates and times to outside sim season <<<!!! ####
