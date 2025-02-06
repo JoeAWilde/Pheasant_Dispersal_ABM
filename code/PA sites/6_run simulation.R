@@ -51,14 +51,11 @@ ssf_betas <- ssf_model$model$coefficients
 ## extract names of coefficients ####
 cov_names <- names(ssf_betas)
 exp(ssf_betas)
-## INCREASE ATTRACTION TO FEEDERS ####
-## make feeders as attractive as decid. woodland ##
-ssf_betas[which(cov_names == "feed")] <- ssf_betas[which(cov_names == "pen")]
 
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 5
+n_IDS <- 100
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
@@ -113,7 +110,7 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 for(ss in sites){
   # Parallel processing set up ####
   ## create cluster of cores ####
-  cl <- makeCluster(parallel::detectCores(logical = F), type = "SOCK")
+  cl <- makeCluster(100, type = "SOCK")
   registerDoSNOW(cl)
   
   ##create progress bar for simulation loop ####

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name="disp_sim_test"  # Job name
+#SBATCH --job-name="Ex0_disp_sim"  # Job name
 #SBATCH --output=job_output_%j.txt                # Output file (%j = job ID)
 #SBATCH --error=job_error_%j.txt                  # Error file
 #SBATCH --time=48:00:00                           # Time limit (hh:mm:ss)
 #SBATCH --ntasks=1                                # Number of tasks (1 for running a single script)
-#SBATCH --cpus-per-task=5                         # Number of CPUs per task
-#SBATCH --mem=32G                                 # Memory per node
+#SBATCH --cpus-per-task=100                         # Number of CPUs per task
+#SBATCH --mem=124G                                 # Memory per node
 #SBATCH --export=ALL                              # Export all environment variables
 #SBATCH --partition=long                        # Set which partition to use
 #SBATCH --mail-user=joe.wilde@bioss.ac.uk
