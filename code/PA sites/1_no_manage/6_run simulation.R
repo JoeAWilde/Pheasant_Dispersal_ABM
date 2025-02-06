@@ -14,14 +14,10 @@ source("code/functions/simulation function.R")
 
 CRS_used <- "EPSG:27700"
 
-site_to_run <- "Ex"
-
-
 site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
   mutate(id = paste0(substr(Location, 1, 2), Approx_dist_from_PA))
-sites <- site_coords$id %>%
-    .[grepl(site_to_run, .)]
-
+sites <- site_coords$id
+sites <- c("Ex0")
 ## load in the step length parameters ####
 sl_model <- readRDS("outputs/script_2/sl_regress_rp.rds")
 
@@ -55,23 +51,21 @@ ssf_betas <- ssf_model$model$coefficients
 ## extract names of coefficients ####
 cov_names <- names(ssf_betas)
 exp(ssf_betas)
+## INCREASE ATTRACTION TO FEEDERS ####
+## make feeders as attractive as decid. woodland ##
+ssf_betas[which(cov_names == "feed")] <- ssf_betas[which(cov_names == "pen")]
 
-## !!!>>> change feeder beta to zero <<<!!! ####
-ssf_betas["feed"] <- 0
-exp(ssf_betas)
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 100
+n_IDS <- 5
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
 stop_if_left <- TRUE
-
-## !!!>>> change dogin dates and times to outside sim season <<<!!! ####
-dogin_dates <- as.Date(seq(ymd_hms("2000-06-01 00:00:01"), ymd_hms("2000-06-02 00:00:01"), by = "days"))
-dogin_times <- hms::as_hms(c("23:59:59", "00:00:01"))
-dogin_prob <- 0.0
+dogin_dates <- as.Date(seq(st_date, st_date + months(1), by = "days"))
+dogin_times <- hms::as_hms(c("18:30:00", "20:00:00"))
+dogin_prob <- 0.9
 
 # Other parameters for simulation ####
 
@@ -119,7 +113,7 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 for(ss in sites){
   # Parallel processing set up ####
   ## create cluster of cores ####
-  cl <- makeCluster(100, type = "SOCK")
+  cl <- makeCluster(parallel::detectCores(logical = F), type = "SOCK")
   registerDoSNOW(cl)
   
   ##create progress bar for simulation loop ####
