@@ -14,7 +14,7 @@ source("code/functions/simulation function.R")
 
 CRS_used <- "EPSG:27700"
 
-site_to_run <- "Ex"
+site_to_run <- "Up"
 
 
 site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
@@ -176,7 +176,7 @@ for(ss in sites){
         mutate(site = ss)
       
       ## save the simulation ####
-      saveRDS(sim_df, paste0("outputs/script_6/PA sites/", id, "_sim_output_site_", ss, ".rds"))
+      saveRDS(sim_df, paste0("outputs/script_6/PA sites/1_no_manage/Up_site/", id, "_sim_output_site_", ss, ".rds"))
       rm(sim_df)
     
   }; stopCluster(cl)

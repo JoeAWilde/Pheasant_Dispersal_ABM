@@ -16,7 +16,6 @@ CRS_used <- "EPSG:27700"
 
 site_to_run <- "Ex"
 
-
 site_coords <- read_xlsx("all_PA_sites.xlsx") %>%
   mutate(id = paste0(substr(Location, 1, 2), Approx_dist_from_PA))
 sites <- site_coords$id %>%
@@ -56,10 +55,6 @@ ssf_betas <- ssf_model$model$coefficients
 cov_names <- names(ssf_betas)
 exp(ssf_betas)
 
-## !!!>>> change feeder beta to zero <<<!!! ####
-ssf_betas["feed"] <- 0
-exp(ssf_betas)
-
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
 n_IDS <- 100
@@ -67,11 +62,9 @@ fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
 n_csteps <- 250
 stop_if_left <- TRUE
-
-## !!!>>> change dogin dates and times to outside sim season <<<!!! ####
-dogin_dates <- as.Date(seq(ymd_hms("2000-06-01 00:00:01"), ymd_hms("2000-06-02 00:00:01"), by = "days"))
-dogin_times <- hms::as_hms(c("23:59:59", "00:00:01"))
-dogin_prob <- 0.0
+dogin_dates <- as.Date(seq(st_date, st_date + months(1), by = "days"))
+dogin_times <- hms::as_hms(c("16:30:00", "22:00:00"))
+dogin_prob <- 0.9
 
 # Other parameters for simulation ####
 
