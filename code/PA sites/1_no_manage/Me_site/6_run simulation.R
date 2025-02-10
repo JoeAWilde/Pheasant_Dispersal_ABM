@@ -119,7 +119,7 @@ Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)
 for(ss in sites[2:length(sites)]){
   # Parallel processing set up ####
   ## create cluster of cores ####
-  cl <- makeCluster(25, type = "SOCK")
+  cl <- makeCluster(100, type = "SOCK")
   registerDoSNOW(cl)
   
   ##create progress bar for simulation loop ####

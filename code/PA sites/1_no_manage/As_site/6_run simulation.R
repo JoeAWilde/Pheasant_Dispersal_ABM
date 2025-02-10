@@ -116,7 +116,7 @@ Springmort <- list(
 Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)) # probability and individual dies on a day
 
 
-for(ss in sites[2:length(sites)]{
+for(ss in sites[2:length(sites)]){
   # Parallel processing set up ####
   ## create cluster of cores ####
   cl <- makeCluster(100, type = "SOCK")

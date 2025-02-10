@@ -116,10 +116,10 @@ Springmort <- list(
 Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)) # probability and individual dies on a day
 
 
-for(ss in sites){
+for(ss in sites[2:length(sites)]){
   # Parallel processing set up ####
   ## create cluster of cores ####
-  cl <- makeCluster(25, type = "SOCK")
+  cl <- makeCluster(100, type = "SOCK")
   registerDoSNOW(cl)
   
   ##create progress bar for simulation loop ####
@@ -167,7 +167,7 @@ for(ss in sites){
     hedges_edges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped trimmed hedges_edges raster.tif"))
     hedges_edges_dist <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped trimmed hedges_edges distance raster.tif"))
     
-    
+    try({
       ## start the simulation ####
       sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
                        dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
@@ -178,6 +178,6 @@ for(ss in sites){
       ## save the simulation ####
       saveRDS(sim_df, paste0("outputs/script_6/PA sites/1_no_manage/Ex_site/", id, "_sim_output_site_", ss, ".rds"))
       rm(sim_df)
-    
+    })
   }; stopCluster(cl)
 }
