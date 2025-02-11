@@ -172,7 +172,7 @@ for(ss in sites[2:length(sites)]){
         mutate(site = ss)
       
       ## save the simulation ####
-      saveRDS(sim_df, paste0("outputs/script_6/PA sites/1_no_manage/Du_site/", id, "_sim_output_site_", ss, ".rds"))
+      saveRDS(sim_df, paste0("outputs/script_6/PA sites/2_feed/Du_site/", id, "_sim_output_site_", ss, ".rds"))
       rm(sim_df)
     })
   }; stopCluster(cl)
