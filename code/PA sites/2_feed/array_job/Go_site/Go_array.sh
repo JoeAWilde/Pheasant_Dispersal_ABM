@@ -9,6 +9,8 @@
 #SBATCH --mem=5G                        # Reduce memory request (was 124G)
 #SBATCH --export=ALL                    # Export environment variables
 #SBATCH --partition=long               # Use high-memory partition
+#SBATCH --mail-user=joe.wilde@bioss.ac.uk
+#SBATCH --mail-type=ARRAY_TASKS
 
 echo "Running task ID: $SLURM_ARRAY_TASK_ID"
 Rscript "6_run simulation array.R" $SLURM_ARRAY_TASK_ID
