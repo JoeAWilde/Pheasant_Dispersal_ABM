@@ -193,4 +193,5 @@ summary(m1)
 saveRDS(m1, "outputs/script_3/iSSF_field_edges.rds")
 
 ## extract coefficients and save ####
-saveRDS(summary(m1)$coefficients[, 1], "outputs/script_3/iSSF_coefficients_field_edges.rds")
+ssf_betas <- m1$model$coefficients
+saveRDS(ssf_betas, "outputs/script_3/ssf_betas.rds")

@@ -130,6 +130,13 @@ priors <- prior(normal(0, 1), class = b) + prior(exponential(1), class = sd)
 #  prior = priors
 #); saveRDS(m1, "outputs/script_2/sl_regress_rp.rds")
 
+sl_pars <- as.data.frame(summary(m1)$fixed)
+saveRDS(sl_pars, "outputs/script_2/sl_pars.rds")
+
+sl_spec_pars <- as.data.frame(summary(m1)$spec_pars)
+saveRDS(sl_spec_pars, "outputs/script_2/sl_spec_pars.rds")
+
+
 # Turning angle regression ####
 
 ## bind turning angle between 0 and 2pi ####
@@ -147,3 +154,5 @@ m2 <- brm(
   backend = "cmdstan"
 ); saveRDS(m2, "outputs/script_2/ta_regress_rp.rds")
 
+ta_pars <- as.data.frame(summary(m2)$fixed)
+saveRDS(ta_pars, "outputs/script_2/ta_pars.rds")
