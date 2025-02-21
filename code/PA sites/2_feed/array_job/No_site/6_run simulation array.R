@@ -145,4 +145,4 @@ sim_df <- id_sim(task_id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin
   mutate(site = ss)
 
 ## save the simulation ####
-saveRDS(sim_df, paste0("outputs/script_6/PA sites/1_no_manage/As_site/", task_id, "_sim_output_site_", ss, ".rds"))
+saveRDS(sim_df, paste0("outputs/script_6/PA sites/2_feed/No_site/", task_id, "_sim_output_site_", ss, ".rds"))
