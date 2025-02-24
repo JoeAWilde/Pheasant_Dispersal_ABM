@@ -54,5 +54,17 @@ for(i in 1:nrow(site_coords)) {
     st_as_sf(., coords = c("X", "Y"), crs = CRS_used)
   st_write(ith_feeders, paste0("outputs/script_4/PA sites/", site_id, "_feeders_shapefile.shp"), append = F, quiet = T)
   
+  ### create a raster of managed feeder and save ####
+  site_name <- substr(ss, 1, 2)
+
+  managed_feeders <- read_xlsx(paste0("Data/PA_site_feeder_management/", site_name, "_managed_feeders.xlsx"), 
+                               col_names = F, quiet = T) %>%
+                               rename(X = 1, Y = 2) %>%
+                               mutate(X = X + site_coords$Easting[i], 
+                                      Y = Y + site_coords$Northing[i]
+                                      ) %>%
+                               st_as_sf(., coords = c("X", "Y"), crs = CRS_used)
+
+  st_write(managed_feeders, paste0("outputs/script_4/PA sites/", site_id, "_managed_feeders_shapefile.shp"), append = F, quiet = T)
   pb$tick()
 }

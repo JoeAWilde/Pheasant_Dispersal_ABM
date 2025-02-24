@@ -141,11 +141,18 @@ for(ss in site_coords$id) {
   ## Feeders ####
   
   ### load in the feeder points and convert to shapefile ####
-  feeders <- st_read(paste0("outputs/script_5/PA sites/", ss, "_feeders_shapefile.shp"))
+  feeders <- st_read(paste0("outputs/script_4/PA sites/", ss, "_feeders_shapefile.shp"))
   
   ### create a raster of distance to feeders and save ####
   feed_dist <- distance(hab, feeders)
   writeRaster(feed_dist, paste0("outputs/script_5/PA sites/", ss, " cropped FAKE feeder distance raster.tif"), overwrite = T)
+
+
+  ### create a raster of managed feeder and save ####
+  managed_feeders <- st_read(paste0("outputs/script_4/PA sites/", ss, "_managed_feeders_shapefile.shp"))
+  mana_feed_dist <- distance(hab, managed_feeders)
+  writeRaster(mana_feed_dist, paste0("outputs/script_5/PA sites/", ss, "cropped managed feeder distance raster.tif"), overwrite = T)
+
   gc()
   
   pb$tick()
