@@ -122,7 +122,7 @@ dogin_outside_edge <- st_boundary(st_buffer(st_geometry(pen_pts), dist = 200))
 short_list <- T
 hab <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped habitat raster.tif"))
 pen <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped pen distance raster.tif"))
-feed <- rast(paste0("outputs/script_5/PA sites/", ss, "cropped managed feeder distance raster.tif"))
+feed <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped managed feeder distance raster.tif"))
 wood <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped wood distance raster.tif"))
 hedges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped hedgerow distance raster.tif"))
 field_edges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped field_edges distance raster.tif"))

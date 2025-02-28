@@ -122,7 +122,7 @@ dogin_outside_edge <- st_boundary(st_buffer(st_geometry(pen_pts), dist = 200))
 short_list <- T
 hab <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped habitat raster.tif"))
 pen <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped pen distance raster.tif"))
-feed <- rast(paste0("outputs/script_5/PA sites/", ss, "cropped managed feeder distance raster.tif"))
+feed <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped managed feeder distance raster.tif"))
 wood <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped wood distance raster.tif"))
 hedges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped hedgerow distance raster.tif"))
 field_edges <- rast(paste0("outputs/script_5/PA sites/", ss, " cropped field_edges distance raster.tif"))
@@ -145,4 +145,4 @@ sim_df <- id_sim(task_id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin
   mutate(site = ss)
 
 ## save the simulation ####
-saveRDS(sim_df, paste0("outputs/script_6/PA sites/2_feed/Go_site/", task_id, "_sim_output_site_", ss, ".rds"))
+saveRDS(sim_df, paste0("outputs/script_6/PA sites/4_extra_feed/Go_site/", task_id, "_sim_output_site_", ss, ".rds"))
