@@ -1,0 +1,24 @@
+Running task ID: 495
+        feed         hab2         hab3         hab4         hab5         hab6 
+  1.00041921   1.18779526   0.83007763   0.68159083   0.99165866   0.42428095 
+        hab8        hab10        hab11        hab33         wood          pen 
+  0.04086428   0.77003258   1.91357687   0.63230057   0.99802261   0.99949794 
+      hedges  field_edges          sl_      log_sl_      cos_ta_ pen:SinceRel 
+  0.99799757   1.00006619   0.99994843   1.02074990   0.62046457   1.00000174 
+Reading layer `ReleasePen2' from data source 
+  `/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM/data/ATLAS data/Landscape data/ReleasePen/ReleasePen2.shp' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 1 feature and 3 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: 265979.1 ymin: 98602.49 xmax: 266030.1 ymax: 98712.06
+Projected CRS: OSGB36 / British National Grid
+Reading layer `As250_pen_shapefile' from data source 
+  `/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM/outputs/script_4/PA sites/As250_pen_shapefile.shp' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 1 feature and 1 field
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: 474278.7 ymin: 195950.8 xmax: 474314.7 ymax: 195996.9
+Projected CRS: OSGB36 / British National Grid
+Task 495 completed at Thu  6 Mar 23:51:41 GMT 2025
