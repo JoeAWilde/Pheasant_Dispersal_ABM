@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name="Du_array"           # Job name
+#SBATCH --job-name="Du_3_500"           # Job name
 #SBATCH --output=job_output_%A_%a.txt   # Output file (%A = job array ID, %a = task ID)
 #SBATCH --error=job_error_%A_%a.txt     # Error file
 #SBATCH --time=96:00:00                 # Time limit
