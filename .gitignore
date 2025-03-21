@@ -37,3 +37,11 @@ main_model.Rproj
 job ID - no_ cores.txt
 management_scenario_runs.xlsx
 /data/CoastOutline
+*.dbf
+*.prj
+*.shp
+*.shx
+data/PA_site_hedgerow_management/++_managed_hedge_shapefile.dbf
+data/PA_site_hedgerow_management/+-_managed_hedge_shapefile.dbf
+data/PA_site_hedgerow_management/-+_managed_hedge_shapefile.dbf
+data/PA_site_hedgerow_management/--_managed_hedge_shapefile.dbf

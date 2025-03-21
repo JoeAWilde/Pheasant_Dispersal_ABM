@@ -42,7 +42,8 @@ for(i in 1:length(x_signs)) {
     st_write(line, paste0("data/PA_site_hedgerow_management/", 
                                                             x_signs_str[i], 
                                                             y_signs_str[i], 
-                                                            "_managed_hedge_shapefile.shp"))
+                                                            "_managed_hedge_shapefile.shp"), 
+            append = F)
 
     #plot(line, col = "blue")  # Check the buffered line
 
@@ -91,24 +92,26 @@ for(i in 1:nrow(site_dir_df)) {
 
         managed_hedge_st <- st_read(paste0("data/PA_site_hedgerow_management/", 
                                           site_dir_df$dir[i], 
-                                          "_managed_hedge_shapefile.shp"))
+                                          "_managed_hedge_shapefile.shp")) %>%
+                            st_cast("LINESTRING")
 
-        line_bbox <- st_bbox(line)  # Get bounding box
+        line_bbox <- st_bbox(managed_hedge_st)  # Get bounding box
         line_mid_x <- (line_bbox$xmin + line_bbox$xmax) / 2
         line_mid_y <- (line_bbox$ymin + line_bbox$ymax) / 2
 
         x_shift <- mid_x - line_mid_x
         y_shift <- mid_y - line_mid_y
 
-        line_aligned <- st_geometry(line) + c(x_shift, y_shift)
-        line_aligned <- st_set_geometry(line, line_aligned)
+        line_aligned <- st_geometry(managed_hedge_st) + c(x_shift, y_shift)
+        line_aligned <- st_set_geometry(managed_hedge_st, line_aligned)
         line_aligned <- st_set_crs(line_aligned, 27700)
 
-        all_hedges_st <- st_union(line_aligned, raw_hedge_st)
+        unioned_geom <- st_union(line_aligned, raw_hedge_st) %>%
+                            st_as_sfc(., crs = 27700)
 
-        ggplot() + 
-            geom_sf(data = all_hedges_st)
-
-        
+        st_write(unioned_geom, paste0("data/PA_site_hedgerow_management/", site_dir_df$site[i], 
+                                                            d, 
+                                                            "_managed_hedge_shapefile.shp"), 
+                append = F)
     }
 }

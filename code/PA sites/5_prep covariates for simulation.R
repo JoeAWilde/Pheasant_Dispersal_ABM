@@ -89,6 +89,12 @@ for(ss in site_coords$id) {
   ### save the distance to hedgerows raster ####
   writeRaster(hedges_dist, paste0("outputs/script_5/PA sites/", ss, " cropped hedgerow distance raster.tif"), overwrite = T)
   
+
+    ## Managed hedgerows ####
+  mh <- st_read(paste0("data/PA_site_hedgerow_management/", ss, "_managed_hedge_shapefile.shp"))
+  mana_hedges_dist <- terra::distance(hab, mh)
+
+  writeRaster(mana_hedges_dist, paste0("outputs/script_5/PA sites/", ss, " cropped managed hedgerow distance raster.tif"), overwrite = T)
   
   ## Hedges and edges ####
   
@@ -137,6 +143,9 @@ for(ss in site_coords$id) {
   
   field_edges_dist <- distance(hab, field_edges)
   writeRaster(field_edges_dist, paste0("outputs/script_5/PA sites/", ss, " cropped field_edges distance raster.tif"), overwrite = T)
+
+
+
   
   ## Feeders ####
   
