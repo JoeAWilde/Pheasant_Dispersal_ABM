@@ -59,7 +59,7 @@ writeRaster(hab_pb, "outputs/script_4/ATLAS outputs/cropped release pen habitat 
 ## Hedges ####
 
 ### load in and crop hedgerow data ####
-hedges <- st_read("data/Woody_LinearFeatures/NorthWyke_LinearFeatures.shp") %>%
+hedges <- st_read("data/Linear+Woody+Features_2393217/wlff-2016_5294765/GB_WLF_V1_0.gdb") %>%
   st_transform(., crs = CRS_used) %>%
   st_crop(x = ., y = ext)
 
@@ -97,10 +97,9 @@ writeRaster(he_dist, "outputs/script_4/ATLAS outputs/cropped hedges_edges distan
 ## Feeders ####
 
 ### load in the feeder points and convert to shapefile ####
-feeders <- read.table("data/FeederCoords2017_27700.csv", sep = ",", header = T) %>%
+feeders <- read.table("data/ATLAS data/Landscape data/FeederCoords2017_27700.csv", sep = ",", header = T) %>%
   st_as_sf(., coords = c("coords.x1", "coords.x2"), crs = CRS_used)
 
 ### create a raster of distance to feeders and save ####
 feed_dist <- distance(hab, feeders)
 writeRaster(feed_dist, "outputs/script_4/ATLAS outputs/cropped feeder distance raster.tif", overwrite = T)
-

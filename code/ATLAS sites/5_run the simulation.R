@@ -1,5 +1,3 @@
-#Script to run the dispersal simulation 
-
 # load required libraries
 library(tidyverse)
 library(terra)
@@ -7,57 +5,64 @@ library(doSNOW)
 library(sf)
 library(suncalc)
 library(progress)
+library(readxl)
+library(brms)
 
 source("code/functions/simulation function.R")
 
-# set the CRS used ####
-CRS_used <- "EPSG::27700"
-
-# Step length and turning angle regression ####
+CRS_used <- "EPSG:27700"
 
 ## load in the step length parameters ####
-sl_model <- readRDS("outputs/script_2/new_step_length_pars.rds")
+sl_model <- readRDS("outputs/script_2/sl_regress_rp.rds")
+
+sl_pars <- as.data.frame(summary(sl_model)$fixed)
+sl_spec_pars <- as.data.frame(summary(sl_model)$spec_pars)
 
 sl_pars <- list(
-  Intercept = sl_model$estimates[1],
-  Hab_values = as.integer(substr(sl_model$est_names[2:10], 9, 11)),
-  Hab_betas = sl_model$estimates[2:10],
-  Time_beta = sl_model$estimates[11],
-  Gam_shape = sl_model$estimates[12]
+  Intercept = sl_pars$Estimate[1],
+  Hab_values = as.integer(substr(rownames(sl_pars)[2:10], 4, 6)),
+  Hab_betas = sl_pars$Estimate[2:10],
+  Time_beta = sl_pars$Estimate[11],
+  Gam_shape = sl_spec_pars$Estimate[1]
 )
 
 ## load in turning angle parameters ####
-ta_model <- readRDS("outputs/script_2/new_turning_angle_pars.rds")
+ta_model <- readRDS("outputs/script_2/ta_regress_rp.rds")
+
+ta_pars <- as.data.frame(summary(ta_model)$fixed)
+
 ta_pars <- list(
-  vm_mu = ta_model$estimates_angle[1], 
-  vm_kappa = ta_model$estimates_angle[12]
+  vm_mu = ta_pars$Estimate[1], 
+  vm_kappa = 1
 )
 
 # iSSF parameters ####
 
 ## load in iSSF coefficients ####
-ssf_model <- readRDS("outputs/script_3/iSSF_rp.rds")
+ssf_model <- readRDS("outputs/script_3/iSSF_field_edges.rds")
 ssf_betas <- ssf_model$model$coefficients
 
 ## extract names of coefficients ####
 cov_names <- names(ssf_betas)
-
+exp(ssf_betas)
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 1000
+n_IDS <- 10
 fix_rate <- 60
-n_steps <- as.numeric(difftime(st_date + years(1), st_date, units = "mins")) / fix_rate
-n_csteps <- 250
+n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
+n_csteps <- 200
 stop_if_left <- TRUE
-dogin_dates <- as.Date(seq(st_date, st_date + months(1), by = "days"))
-dogin_times <- hms::as_hms(c("18:30:00", "20:00:00"))
-dogin_prob <- 0.9
+
+## !!!>>> change dogin dates and times to outside sim season <<<!!! ####
+dogin_dates <- as.Date(seq(ymd_hms("2000-06-01 00:00:01"), ymd_hms("2000-06-02 00:00:01"), by = "days"))
+dogin_times <- hms::as_hms(c("23:59:59", "00:00:01"))
+dogin_prob <- 0.0
 
 # Other parameters for simulation ####
 
 ## create a dataframe of sunlight times at the centre of the pen ####
-atlas_pen_cent <- st_read("data/ReleasePen/ReleasePen2.shp") %>%
+atlas_pen_cent <- st_read("data/ATLAS data/Landscape data/ReleasePen/ReleasePen2.shp") %>%
   st_centroid(.) %>%
   st_transform(., "EPSG:4326") %>%
   st_coordinates(.)
@@ -97,16 +102,10 @@ Springmort <- list(
 Springmort$Springdaily <-( 1 - Springmort$SpringSurv^(1/Springmort$Springdaysno)) # probability and individual dies on a day
 
 
-## load in release pen ####
-pen_pts <- st_read("data/ReleasePen/ReleasePen2.shp")
-
-## create the area where dogging in occurs ####
-dogin_buffer <- st_difference(st_buffer(st_geometry(pen_pts), dist = 200), pen_pts)
-dogin_outside_edge <- st_boundary(st_buffer(st_geometry(pen_pts), dist = 200))
 
 # Parallel processing set up ####
 ## create cluster of cores ####
-cl <- makeCluster(parallel::detectCores(logical = F)-2, type = "SOCK")
+cl <- makeCluster(10, type = "SOCK")
 registerDoSNOW(cl)
 
 ##create progress bar for simulation loop ####
@@ -123,7 +122,6 @@ progress <- function(n) {
 }
 
 opts <- list(progress = progress)
-
 # Simulation loop ####
 foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
   ## reload required packages for each worker ####
@@ -131,28 +129,40 @@ foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
   require(terra)
   require(sf)
   
+  pen_pts <- st_read("data/ATLAS data/Landscape data/ReleasePen/ReleasePen2.shp")
+  
+  ## create the area where dogging in occurs ####
+  dogin_buffer <- st_difference(st_buffer(st_geometry(pen_pts), dist = 200), pen_pts)
+  dogin_outside_edge <- st_boundary(st_buffer(st_geometry(pen_pts), dist = 200))
+  
   ## load in covariate rasters (can't be passed to workers) ####
   short_list <- T
-  hab <- rast("outputs/script_4/ATLAS outputs/cropped release pen habitat raster.tif")
+  hab <- rast("outputs/script_4/ATLAS outputs/cropped habitat raster.tif")
   pen <- rast("outputs/script_4/ATLAS outputs/cropped pen distance raster.tif")
   feed <- rast("outputs/script_4/ATLAS outputs/cropped feeder distance raster.tif")
   wood <- rast("outputs/script_4/ATLAS outputs/cropped wood distance raster.tif")
+  hedges <- rast("outputs/script_4/ATLAS outputs/cropped hedgerow distance raster.tif")
+  field_edges <- rast("outputs/script_4/ATLAS outputs/cropped field_edges distance raster.tif")
   
   ## bind all covariate rasters together ####
-  covs <- c(feed, hab, wood, pen)
+  covs <- c(feed, hab, wood, pen, hedges, field_edges)
+  
+  wood_rast <- rast("outputs/script_4/ATLAS outputs/cropped wood raster.tif")
   
   ## load in the hedges and egdes rasters ####
-  hedges_edges <- rast("outputs/script_4/ATLAS outputs/cropped hedges_edges raster.tif")
-  hedges_edges_dist <- rast("outputs/script_4/ATLAS outputs/cropped hedges_edges distance raster.tif")
+  hedges_edges <- rast("outputs/script_4/ATLAS outputs/cropped trimmed hedges_edges raster.tif")
+  hedges_edges_dist <- rast("outputs/script_4/ATLAS outputs/cropped trimmed hedges_edges distance raster.tif")
   
-  
-  ## start the simulation ####
-  sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
-                   dogin_prob, dogin_buffer, dogin_outside_edge, covs, Autmort, Wintmort, Springmort, 
-                   st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
-                   hedges_edges, hedges_edges_dist)
-  
-  ## save the simulation ####
-  saveRDS(sim_df, paste0("outputs/script_5/ATLAS output/", id, "_sim_output_rp.rds"))
-  rm(sim_df)
+  try({
+    ## start the simulation ####
+    sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
+                     dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
+                     st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
+                     hedges_edges, hedges_edges_dist) %>%
+      mutate(site = ss)
+    
+    ## save the simulation ####
+    saveRDS(sim_df, paste0("outputs/script_5/ATLAS outputs/", id, "_sim_output_ATLAS.rds"))
+    rm(sim_df)
+  })
 }; stopCluster(cl)
