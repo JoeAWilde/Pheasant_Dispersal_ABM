@@ -6,6 +6,7 @@ library(terra)
 library(tidyterra)
 library(sf)
 source("code/functions/UKCEH_functions.R")
+source("code/functions/hedge_trimming.R")
 
 # ATLAS data ####
 CRS_used <- "EPSG:27700"
@@ -78,6 +79,9 @@ writeRaster(hedges_dist, "outputs/script_4/ATLAS outputs/cropped hedgerow distan
 ### extract just the woodland from hab ####
 wood_rast <- ifel(hab %in% 1:2, 1, NA)
 
+### save just woodland as a raster ####
+writeRaster(wood_rast, "outputs/script_4/ATLAS outputs/cropped wood raster.tif", overwrite = T)
+
 ### extract and save distance to woodland raster ####
 wood_dist <- distance(wood_rast)
 writeRaster(wood_dist, "outputs/script_4/ATLAS outputs/cropped wood distance raster.tif", overwrite = T)
@@ -92,6 +96,30 @@ writeRaster(hedges_edges_rast, "outputs/script_4/ATLAS outputs/cropped hedges_ed
 ### create a raster of the distance to hedges and edges and save####
 he_dist <- distance(hedges_edges_rast)
 writeRaster(he_dist, "outputs/script_4/ATLAS outputs/cropped hedges_edges distance raster.tif", overwrite = T)
+
+## Trimmed hedges and edges ####
+
+### use function to trim hedges within a certain radius of the centre of the pen ####
+trim_hedges_rast <- trim_hedges(hab, hedges_rast, cen_pen, 2000)
+
+### merge the hedges and woodland to make trimmed hedges and edges and save ####
+trim_hedges_edges_rast <- merge(wood_rast, trim_hedges_rast)
+writeRaster(trim_hedges_edges_rast, "outputs/script_4/ATLAS outputs/cropped trimmed hedges_edges raster.tif", overwrite = T)
+
+### create a raster of the distance to trimmed hedges and edges and save####
+trim_he_dist <- distance(trim_hedges_edges_rast)
+writeRaster(trim_he_dist, "outputs/script_4/ATLAS outputs/cropped trimmed hedges_edges distance raster.tif", overwrite = T)
+
+
+## Edges of fields ####
+field_edges <- ifel(hab %in% 3:4, 1, NA) %>%
+  as.polygons(., dissolve = TRUE) %>%
+  .[!is.na(values(.)), ] %>%
+  st_as_sf(.) %>%
+  st_boundary(.)
+
+field_edges_dist <- distance(hab, field_edges)
+writeRaster(field_edges_dist, "outputs/script_4/ATLAS outputs/cropped field_edges distance raster.tif", overwrite = T)
 
 
 ## Feeders ####

@@ -53,11 +53,9 @@ fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
 n_csteps <- 200
 stop_if_left <- TRUE
-
-## !!!>>> change dogin dates and times to outside sim season <<<!!! ####
-dogin_dates <- as.Date(seq(ymd_hms("2000-06-01 00:00:01"), ymd_hms("2000-06-02 00:00:01"), by = "days"))
-dogin_times <- hms::as_hms(c("23:59:59", "00:00:01"))
-dogin_prob <- 0.0
+dogin_dates <- as.Date(seq(st_date, st_date + months(1), by = "days"))
+dogin_times <- hms::as_hms(c("16:30:00", "22:00:00"))
+dogin_prob <- 0.9
 
 # Other parameters for simulation ####
 
@@ -153,16 +151,15 @@ foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
   hedges_edges <- rast("outputs/script_4/ATLAS outputs/cropped trimmed hedges_edges raster.tif")
   hedges_edges_dist <- rast("outputs/script_4/ATLAS outputs/cropped trimmed hedges_edges distance raster.tif")
   
-  try({
-    ## start the simulation ####
-    sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
-                     dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
-                     st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
-                     hedges_edges, hedges_edges_dist) %>%
-      mutate(site = ss)
-    
-    ## save the simulation ####
-    saveRDS(sim_df, paste0("outputs/script_5/ATLAS outputs/", id, "_sim_output_ATLAS.rds"))
-    rm(sim_df)
-  })
+
+  ## start the simulation ####
+  sim_df <- id_sim(id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin_dates, dogin_times, 
+                   dogin_prob, dogin_buffer, dogin_outside_edge, covs, wood_rast, Autmort, Wintmort, Springmort, 
+                   st_date, n_IDs, n_steps, n_csteps, fix_rate, stop_if_left, suntimes, short_list, 
+                   hedges_edges, hedges_edges_dist)
+  
+  ## save the simulation ####
+  saveRDS(sim_df, paste0("outputs/script_5/ATLAS outputs/", id, "_sim_output_ATLAS.rds"))
+  rm(sim_df)
+
 }; stopCluster(cl)
