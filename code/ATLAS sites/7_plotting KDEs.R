@@ -16,7 +16,7 @@ source("code/functions/UKCEH_functions.R")
 
 
 ## Load in actual movement data ####
-pheas_trk <-  read.table("data/Pheas_filtered.csv", header = T, sep = ",") %>%
+pheas_trk <-  read.table("data/ATLAS data/GPS data/Pheas_filtered.csv", header = T, sep = ",") %>%
   mutate(DateTime = ymd_hms(DateTime), 
          Deploydatetime = ymd_hms(Deploydatetime)) %>%
   filter(year(Deploydatetime) == 2018) %>%
@@ -32,7 +32,7 @@ pheas_trk <-  read.table("data/Pheas_filtered.csv", header = T, sep = ",") %>%
          day = yday(t_))
 
 ## Load in simulated movement data ####
-sim_trk <- readRDS("outputs/script_6/ATLAS output/simulation_data_rp.rds") %>%
+sim_trk <- readRDS("outputs/script_6/ATLAS outputs/simulation_data_ATLAS.rds") %>%
   filter(x != 0) %>%
   make_track(tbl = ., .x = x, .y = y, .t = DateTime,
              ID = id, SinceRel = DaysSinceRel, crs = "EPSG:27700") %>%
@@ -81,10 +81,10 @@ hr_sim <- sim_trk %>%
 # # Convert to LINESTRING
 # pen_line <- st_sfc(st_linestring(as.matrix(pen)), crs = "EPSG:27700")
 
-pen_pts <- st_read("data/ReleasePen/ReleasePen2.shp")
+pen_pts <- st_read("data/ATLAS data/Landscape data/ReleasePen/ReleasePen2.shp")
 
 ## Read in feeder coordinates
-feeder_pts <- read.csv("data/FeederCoords2017_27700.csv") %>%
+feeder_pts <- read.csv("data/ATLAS data/Landscape data/FeederCoords2017_27700.csv") %>%
   vect(., geom = c("coords.x1", "coords.x2"), crs = "EPSG:27700") 
 
 #load in habitat data and UKCEH colours
@@ -169,8 +169,8 @@ for(j in 1:nrow(Facets)){
     ## set theme
     theme_light(base_size = 130) +
     theme(legend.key.width = unit(6, "cm")) +
-    scale_y_continuous(name = "Distance from release pen (m)", breaks = NULL, limits = c(min_y, max_y)) +
-    scale_x_continuous(name = "Distance from release pen (m)", breaks = NULL, limits = c(min_x, max_x)) +
+    scale_y_continuous(name = "", breaks = NULL, limits = c(min_y, max_y)) +
+    scale_x_continuous(name = "", breaks = NULL, limits = c(min_x, max_x)) +
     coord_sf(datum = pull_crs(hab_rast))
   # pt
   

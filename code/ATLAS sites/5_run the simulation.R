@@ -48,7 +48,7 @@ exp(ssf_betas)
 
 # Simulation parameters ####
 st_date <- ymd_hms("2018-07-18 07:05:00")
-n_IDS <- 10
+n_IDS <- 150
 fix_rate <- 60
 n_steps <- as.numeric(difftime(st_date + months(7), st_date, units = "mins")) / fix_rate
 n_csteps <- 200
@@ -159,7 +159,7 @@ foreach(id = 1:n_IDS, .options.snow = opts) %dopar% {
                    hedges_edges, hedges_edges_dist)
   
   ## save the simulation ####
-  saveRDS(sim_df, paste0("outputs/script_5/ATLAS outputs/", id, "_sim_output_ATLAS.rds"))
+  saveRDS(sim_df, paste0("outputs/script_5/ATLAS outputs/2_", id, "_sim_output_ATLAS.rds"))
   rm(sim_df)
 
 }; stopCluster(cl)

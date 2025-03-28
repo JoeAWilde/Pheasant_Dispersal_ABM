@@ -1,15 +1,13 @@
 library(tidyverse)
 library(progress)
 
-sim_files <- list.files("outputs/script_5/ATLAS output/")[
-  which(grepl("_rp", list.files("outputs/script_5/ATLAS output/")))
-]
+sim_files <- list.files("outputs/script_5/ATLAS outputs/")
 
 for(i in sim_files) {
   if(i == sim_files[1]) pb <- progress_bar$new(total = length(sim_files), 
                                                format = "[:bar] :percent eta::eta", 
                                                clear = F); pb$tick(0)
-  df_id <- readRDS(paste0("outputs/script_5/ATLAS output/", i))
+  df_id <- readRDS(paste0("outputs/script_5/ATLAS outputs/", i))
   
   if(i == sim_files[1]) {
     all_df <- df_id
@@ -17,4 +15,4 @@ for(i in sim_files) {
     all_df <- rbind(all_df, df_id)
   }
   pb$tick()
-};saveRDS(all_df, "outputs/script_6/ATLAS output/simulation_data_rp.rds")
+};saveRDS(all_df, "outputs/script_6/ATLAS outputs/simulation_data_ATLAS.rds")
