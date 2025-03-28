@@ -37,6 +37,7 @@ main_model.Rproj
 job ID - no_ cores.txt
 management_scenario_runs.xlsx
 /data/CoastOutline
+*.tar
 *.dbf
 *.prj
 *.shp
