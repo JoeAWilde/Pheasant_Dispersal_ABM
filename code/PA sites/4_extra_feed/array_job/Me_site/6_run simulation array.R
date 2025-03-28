@@ -19,7 +19,7 @@ source("code/functions/simulation function.R")
 CRS_used <- "EPSG:27700"
 
 site_to_run <- "Me"
-distance <- "0"
+distance <- "250"
 ss <- paste0(site_to_run, distance)
 
 site_coords <- read_xlsx("all_PA_sites.xlsx") %>%

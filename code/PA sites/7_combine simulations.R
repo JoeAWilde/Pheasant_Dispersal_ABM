@@ -74,7 +74,7 @@ for(ss in sites) {
              dist_from_pen_band, total_fixes) 
   
   
-  cl <- makeCluster(parallel::detectCores(logical = F)-1, type = "SOCK")
+  cl <- makeCluster(5, type = "SOCK")
   registerDoSNOW(cl)
 
   ##create progress bar for simulation loop ####
