@@ -7,13 +7,13 @@ library(sf)
 library(readxl)
 # library(plyr)
 
-root <- "outputs/script_6/PA sites/"
+site <- "As"
 
-sites <- paste0(
-  substr(read_xlsx("all_PA_sites.xlsx")$Location, 1, 2), 
-  read_xlsx("all_PA_sites.xlsx")$Approx_dist_from_PA
-)
+root <- paste0("outputs/script_6/PA sites/3_baseline/", site, "_site/")
 
+dists <- c(0, 250, 500, 1000, 2000)
+
+sites <- paste0(site, dists)
 
 for(ss in sites) {
   if(ss == sites[1]) pb <- progress_bar$new(total = length(sites),
