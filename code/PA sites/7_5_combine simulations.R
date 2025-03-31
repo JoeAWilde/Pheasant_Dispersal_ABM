@@ -7,7 +7,7 @@ library(sf)
 library(readxl)
 # library(plyr)
 
-manag <- "1_no_manage"
+manag <- "5_all_manage"
 
 site <- c("As", "Bo", "Du", "Ex", "Go", "Me", "Mo", "No", "Up")
 dists <- c(0, 250, 500, 1000, 2000)
