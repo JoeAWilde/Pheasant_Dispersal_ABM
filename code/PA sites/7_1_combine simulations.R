@@ -12,8 +12,8 @@ site <- c("As", "Bo", "Du", "Ex", "Go", "Me", "Mo", "No", "Up")
 root <- paste0("outputs/script_6/PA sites/1_no_manage/", site, "_site/")
 
 dists <- c(0, 250, 500, 1000, 2000)
-
-sites <- paste0(site, dists)
+sites <- c()
+for(s in site){for(d in dists){sites <- append(sites, paste0(s, d))}}
 
 for(ss in sites) {
   if(ss == sites[1]) pb <- progress_bar$new(total = length(sites),
@@ -22,13 +22,7 @@ for(ss in sites) {
 
   sim_files <- paste0(root, list.files(root)) %>%
     .[grepl(ss, .) & !grepl(".tar.gz", .)]
-  
-  kde_sim_files <- sim_files %>%
-    .[grepl("kde", .)]
-    
-  if(length(kde_sim_files > 0)) {
-    sim_files <- kde_sim_files
-  }
+
 
   all_df <- lapply(sim_files, readRDS) %>%
     do.call(rbind, .)
