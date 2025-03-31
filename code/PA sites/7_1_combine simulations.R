@@ -11,7 +11,7 @@ site <- c("As", "Bo", "Du", "Ex", "Go", "Me", "Mo", "No", "Up")
 dists <- c(0, 250, 500, 1000, 2000)
 
 for(s in site) {
-  if(s == sites[1]) pb <- progress_bar$new(total = length(sites),
+  if(s == site[1]) pb <- progress_bar$new(total = length(site),
                                             format = "[:bar] :percent eta::eta",
                                             clear = F); pb$tick(0)
   root <- paste0("outputs/script_6/PA sites/1_no_manage/", s, "_site/")
