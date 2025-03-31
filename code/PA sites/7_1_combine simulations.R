@@ -8,27 +8,29 @@ library(readxl)
 # library(plyr)
 
 site <- c("As", "Bo", "Du", "Ex", "Go", "Me", "Mo", "No", "Up")
-
-root <- paste0("outputs/script_6/PA sites/1_no_manage/", site, "_site/")
-
 dists <- c(0, 250, 500, 1000, 2000)
-sites <- c()
-for(s in site){for(d in dists){sites <- append(sites, paste0(s, d))}}
 
-for(ss in sites) {
-  if(ss == sites[1]) pb <- progress_bar$new(total = length(sites),
+for(s in site) {
+  if(s == sites[1]) pb <- progress_bar$new(total = length(sites),
                                             format = "[:bar] :percent eta::eta",
                                             clear = F); pb$tick(0)
+  root <- paste0("outputs/script_6/PA sites/1_no_manage/", s, "_site/")
 
-  sim_files <- paste0(root, list.files(root)) %>%
-    .[grepl(ss, .) & !grepl(".tar.gz", .)]
+  for(d in dists){
+    ss <- paste0(s, d)
+
+    sim_files <- paste0(root, list.files(root)) %>%
+      .[grepl(ss, .) & !grepl(".tar.gz", .)]
 
 
-  all_df <- lapply(sim_files, readRDS) %>%
-    do.call(rbind, .)
-  saveRDS(all_df, paste0("outputs/script_7/PA sites/", ss, "simulation_data.rds"))
+    all_df <- lapply(sim_files, readRDS) %>%
+      do.call(rbind, .)
+    saveRDS(all_df, paste0("outputs/script_7/PA sites/", ss, "simulation_data.rds"))
+  }
   pb$tick()
 }
+sites <- c()
+for(s in site){ for(d in dists) {sites <- append(sites, paste0(s, d))}}
 
 for(ss in sites) {
   cen_pen <- st_read(paste0("outputs/script_4/PA sites/", ss, "_pen_shapefile.shp")) %>%
