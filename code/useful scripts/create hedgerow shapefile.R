@@ -109,6 +109,13 @@ for(i in 1:nrow(site_dir_df)) {
         unioned_geom <- st_union(line_aligned, raw_hedge_st) %>%
                             st_as_sfc(., crs = 27700)
 
+        unioned_sf <- st_as_sf(data.frame(geometry = unioned_geom), crs = 27700)
+        sf_sf <- st_combine(unioned_sf) %>% st_as_sf()
+        st_geometry_type(sf_sf)
+
+
+
+        test <- terra::distance(raw_hedges_rast, sf_sf)
         st_write(unioned_geom, paste0("data/PA_site_hedgerow_management/", site_dir_df$site[i], 
                                                             d, 
                                                             "_managed_hedge_shapefile.shp"), 
