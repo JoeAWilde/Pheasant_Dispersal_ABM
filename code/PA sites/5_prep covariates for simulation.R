@@ -1,5 +1,5 @@
 #Script to prepare covariates for simulation
-
+setwd("/mnt/shared/scratch/jwilde/Pheasant_Dispersal_ABM/")
 # load required libraries
 library(tidyverse)
 library(terra)

@@ -7,9 +7,9 @@ library(sf)
 library(readxl)
 # library(plyr)
 
-site <- "Go"
+site <- c("As", "Bo", "Du", "Ex", "Go", "Me", "Mo", "No", "Up")
 
-root <- paste0("outputs/script_6/PA sites/3_baseline/", site, "_site/")
+root <- paste0("outputs/script_6/PA sites/1_no_manage/", site, "_site/")
 
 dists <- c(0, 250, 500, 1000, 2000)
 
@@ -21,7 +21,7 @@ for(ss in sites) {
                                             clear = F); pb$tick(0)
 
   sim_files <- paste0(root, list.files(root)) %>%
-    .[grepl(ss, .)]
+    .[grepl(ss, .) & !grepl(".tar.gz", .)]
   
   kde_sim_files <- sim_files %>%
     .[grepl("kde", .)]
