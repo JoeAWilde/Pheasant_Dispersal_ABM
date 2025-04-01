@@ -18,7 +18,7 @@ source("code/functions/simulation function.R")
 
 CRS_used <- "EPSG:27700"
 
-site_to_run <- "As"
+site_to_run <- "Mo"
 distance <- "500"
 ss <- paste0(site_to_run, distance)
 
@@ -145,4 +145,4 @@ sim_df <- id_sim(task_id, sl_pars, ta_pars, ssf_betas, cov_names, pen_pts, dogin
   mutate(site = ss)
 
 ## save the simulation ####
-saveRDS(sim_df, paste0("outputs/script_6/PA sites/5_all_manage/As_site/", task_id, "_sim_output_site_", ss, ".rds"))
+saveRDS(sim_df, paste0("outputs/script_6/PA sites/5_all_manage/Mo_site/", task_id, "_sim_output_site_", ss, ".rds"))
