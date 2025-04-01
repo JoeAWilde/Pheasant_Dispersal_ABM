@@ -46,3 +46,4 @@ data/PA_site_hedgerow_management/++_managed_hedge_shapefile.dbf
 data/PA_site_hedgerow_management/+-_managed_hedge_shapefile.dbf
 data/PA_site_hedgerow_management/-+_managed_hedge_shapefile.dbf
 data/PA_site_hedgerow_management/--_managed_hedge_shapefile.dbf
+*.tif

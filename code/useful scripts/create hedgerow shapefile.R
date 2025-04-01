@@ -1,6 +1,7 @@
 library(sf)
 library(terra)
 library(tidyverse)
+library(progress)
 
 # Create sf object with points
 x <- cos(seq(1, 100, 0.1))
@@ -29,15 +30,17 @@ for(i in 1:length(x_signs)) {
             mutate(x = x * 1000, 
                 y = y * 1000)
 
-    st <- st_as_sf(df, coords = c("x", "y"), crs = 27700)
+    # st <- st_as_sf(df, coords = c("x", "y"), crs = 27700)
     #plot(st)
 
-
-    # Convert points to a single line
-    line <- st %>%
-        summarise(geometry = st_union(geometry)) %>%  # Merge points
-        st_cast("LINESTRING") %>%  # Convert to a linestring
-        st_buffer(dist = 0.1)  # Make the line 1000 units thick
+    # Ensure the loop is closed
+    if(any(df[nrow(df), ] != df[1, ])) {
+        df <- rbind(df, df[1, ])
+    }
+    # Convert to LINESTRING
+    df_line <- st_sfc(st_linestring(as.matrix(df)), crs = 27700)
+    line <- vect(st_cast(df_line, "POLYGON", crs = 27700)) %>%
+        st_as_sf()
 
     st_write(line, paste0("data/PA_site_hedgerow_management/", 
                                                             x_signs_str[i], 
@@ -81,6 +84,7 @@ site_dir_df <- data.frame(
 )
 
 for(i in 1:nrow(site_dir_df)) {
+    if(i == 1) pb <- progress_bar$new(total = nrow(site_dir_df), format = "[:bar] :percent eta::eta", clear = F); pb$tick(0)
     for(d in c(0, 250, 500, 1000, 2000)) {
         raw_hedges_rast <- rast(paste0("outputs/script_5/PA sites/", site_dir_df$site[i], d, 
                                  " cropped hedges_edges distance raster.tif"))
@@ -92,8 +96,7 @@ for(i in 1:nrow(site_dir_df)) {
 
         managed_hedge_st <- st_read(paste0("data/PA_site_hedgerow_management/", 
                                           site_dir_df$dir[i], 
-                                          "_managed_hedge_shapefile.shp")) %>%
-                            st_cast("LINESTRING")
+                                          "_managed_hedge_shapefile.shp"))
 
         line_bbox <- st_bbox(managed_hedge_st)  # Get bounding box
         line_mid_x <- (line_bbox$xmin + line_bbox$xmax) / 2
@@ -104,21 +107,21 @@ for(i in 1:nrow(site_dir_df)) {
 
         line_aligned <- st_geometry(managed_hedge_st) + c(x_shift, y_shift)
         line_aligned <- st_set_geometry(managed_hedge_st, line_aligned)
-        line_aligned <- st_set_crs(line_aligned, 27700)
+        line_aligned <- st_set_crs(line_aligned, 27700) %>%
+                            st_make_valid() %>%
+                            st_cast("POLYGON") %>%
+                            st_cast("LINESTRING") %>%
+                            rename(SHAPE_L = FID)
 
-        unioned_geom <- st_union(line_aligned, raw_hedge_st) %>%
-                            st_as_sfc(., crs = 27700)
+        unioned_geom <- rbind(raw_hedge_st, line_aligned) %>%
+                            st_union() %>%
+                            st_as_sf() %>%
+                            st_cast("LINESTRING")
 
-        unioned_sf <- st_as_sf(data.frame(geometry = unioned_geom), crs = 27700)
-        sf_sf <- st_combine(unioned_sf) %>% st_as_sf()
-        st_geometry_type(sf_sf)
-
-
-
-        test <- terra::distance(raw_hedges_rast, sf_sf)
         st_write(unioned_geom, paste0("data/PA_site_hedgerow_management/", site_dir_df$site[i], 
                                                             d, 
                                                             "_managed_hedge_shapefile.shp"), 
                 append = F)
     }
+    pb$tick()
 }
