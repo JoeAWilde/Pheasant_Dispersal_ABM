@@ -10,7 +10,7 @@ library(readxl)
 manag <- "4_extra_feed"
 
 site <- c("As", "Bo", "Du", "Ex", "Go", "Me", "Mo", "No", "Up")
-dists <- c(0, 250, 500, 1000, 2000)
+dists <- 500
 
 for(s in site) {
   if(s == site[1]) pb <- progress_bar$new(total = length(site),

@@ -7,7 +7,7 @@ library(sf)
 library(readxl)
 # library(plyr)
 
-site <- "Go"
+site <- "Mo"
 
 root <- paste0("outputs/script_6/PA sites/3_baseline/", site, "_site/")
 
