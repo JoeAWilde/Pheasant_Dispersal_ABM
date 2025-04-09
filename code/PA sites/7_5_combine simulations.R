@@ -10,7 +10,7 @@ library(readxl)
 manag <- "5_all_manage"
 
 site <- c("As", "Bo", "Du", "Ex", "Go", "Me", "Mo", "No", "Up")
-dists <- c(0, 250, 500, 1000, 2000)
+dists <- c(500)
 
 for(s in site) {
   if(s == site[1]) pb <- progress_bar$new(total = length(site),
@@ -111,7 +111,7 @@ for(ss in sites) {
   stopCluster(cl)
   mf_bh_root <- paste0("outputs/script_7/PA sites/", manag, "summarised data loop output/")
   mf_bh_files <- paste0(mf_bh_root, list.files(mf_bh_root)) %>%
-    .[grepl(ss, .) & grepl("meanfix", .)]
+    .[grepl(ss, .) & grepl("meanfix", .) & !grepl("tar.gz", .)]
   
   i_mf_bh <- lapply(mf_bh_files, readRDS) %>%
     do.call(rbind, .) %>%
