@@ -125,3 +125,12 @@ for(i in 1:nrow(site_dir_df)) {
     }
     pb$tick()
 }
+
+
+
+ggplot() + 
+        geom_spatraster(data = test) + 
+        geom_sf(data = pen) + 
+        scale_x_continuous(limits = c(474013.7 - 2000, 474013.7 + 2000)) + 
+        scale_y_continuous(limits = c(196321.9 - 2000, 196321.9 + 2000)) + 
+        annotation_scale(height = unit(2, "cm"), text_cex = 10)

@@ -1,10 +1,10 @@
 library(tidyverse)
 library(RColorBrewer)
 
-root <- "outputs/script_7/PA sites/summarised data/"
+root <- "outputs/script_7/PA sites/3_baseline/summarised data/"
 ss <- "As"
 site_files <- paste0(root, list.files(root)) %>%
-  .[grepl(ss, .)]
+                .[!grepl("tar.gz", .)]
 
 df <- lapply(site_files, readRDS) %>%
   do.call(rbind, .) %>%
@@ -30,11 +30,11 @@ df <- lapply(site_files, readRDS) %>%
       distance_str == "2000+" ~ (pi*(8846^2)) - (pi*(2000^2))
     ), 
     dist_from_PA = case_when(
-      grepl(paste0(ss,"0"), site) ~ 0,
-      grepl(paste0(ss,"250"), .$site) ~ 250, 
-      grepl(paste0(ss,"500"), .$site) ~ 500, 
-      grepl(paste0(ss,"1000"), .$site) ~ 1000, 
-      grepl(paste0(ss,"2000"), .$site) ~ 2000
+      substr(site, 3, 99) == "0" ~ 0,
+      substr(site, 3, 99) == "250" ~ 250, 
+      substr(site, 3, 99) == "500" ~ 500, 
+      substr(site, 3, 99) == "1000" ~ 1000, 
+      substr(site, 3, 99) == "2000" ~ 2000
     )
   ) %>%
   distinct(site, month, birdhours_in_PA, .keep_all = T) %>%
@@ -57,7 +57,14 @@ grouped_df <- df %>%
     high_birdhours_in_PA = mean(high_birdhours_in_PA)
   ) %>%
   ungroup() %>%
-  distinct(month, dist_from_PA, .keep_all = T)
+  distinct(month, dist_from_PA, .keep_all = T) %>%
+  group_by(dist_from_PA, month) %>%
+  summarise(birdhours_in_PA = mean(birdhours_in_PA), 
+         sd_low_PA_birdhours = mean(sd_low_PA_birdhours),
+         sd_high_PA_birdhours = mean(sd_high_PA_birdhours),
+         low_birdhours_in_PA = min(low_birdhours_in_PA), 
+         high_birdhours_in_PA = max(high_birdhours_in_PA)) %>%
+  ungroup()
 
 p1 <- ggplot(data = grouped_df) +
   geom_line(aes(x = dist_from_PA, y = birdhours_in_PA), linetype = "dashed") + 
@@ -67,15 +74,31 @@ p1 <- ggplot(data = grouped_df) +
   geom_point(aes(x = dist_from_PA, y = high_birdhours_in_PA, shape = "Max"), size = 1.5) +
   scale_shape_manual(name = NULL, values = c("Mean" = 19, "Min" = 6, "Max" = 2)) + 
   scale_linetype_manual(name = NULL, values = c("±1 SD" = "solid")) + 
-  scale_y_continuous(name = "Birdhours spent in protected area") +
+  scale_y_continuous(name = "Birdhours spent in protected area", sec.axis = sec_axis(transform = ~./74.4, name="Percentage of total released population fixes")) +
   scale_x_continuous(name = "Release pen distance from protected area boundary (m)",
                      breaks = c(0, 250, 500, 1000, 2000)) +
   scale_fill_manual(name = "Data type", values = brewer.pal(3, "Dark2")) +
-  theme_classic(base_size = 20) +
+  theme_classic(base_size = 30) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   facet_wrap(vars(month))
 p1
 
-ggsave(p1, filename = paste0("outputs/script_8/PA sites/", ss, "_pa_birdhours.png"), 
+ggsave(p1, filename = paste0("outputs/script_8/PA sites/all_baseline_pa_birdhours.png"), 
        height = 4320, width = 7890, units = "px")
 
+grouped_df %>%
+  rename(`Distance from PA boundary (m)` = 1, 
+         Month = 2, 
+         `Mean birdhours spent in PA` = 3, 
+         `Mean - SD birdhours spent in PA` = 4, 
+         `Mean + SD birdhours spent in PA` = 5, 
+         `Minumum birdhours spent in PA` = 6, 
+         `Maximum birdhours spent in PA` = 7) %>%
+  mutate(`Mean birdhours spent in PA` = round(`Mean birdhours spent in PA`, 2), 
+         `Mean - SD birdhours spent in PA` = round(`Mean - SD birdhours spent in PA`, 2), 
+         `Mean + SD birdhours spent in PA` = round(`Mean + SD birdhours spent in PA`, 2), 
+         `Minumum birdhours spent in PA` = round(`Minumum birdhours spent in PA`, 2), 
+         `Maximum birdhours spent in PA` = round(`Maximum birdhours spent in PA`, 2)) %>%
+  knitr::kable(., row.names = FALSE) %>%
+  kableExtra::kable_classic(full_width = T, , html_font = "Cambria") %>%
+  cat(., file = "../../report_writeup/birdhours_baseline_table.html")
