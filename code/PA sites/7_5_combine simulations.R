@@ -72,7 +72,7 @@ for(ss in sites) {
              dist_from_pen_band, total_fixes) 
   
   
-  cl <- makeCluster(5, type = "SOCK")
+  cl <- makeCluster(8, type = "SOCK")
   registerDoSNOW(cl)
 
   ##create progress bar for simulation loop ####
@@ -109,9 +109,9 @@ for(ss in sites) {
   }
 
   stopCluster(cl)
-  mf_bh_root <- paste0("outputs/script_7/PA sites/", manag, "summarised data loop output/")
+  mf_bh_root <- paste0("outputs/script_7/PA sites/", manag, "/summarised data loop output/")
   mf_bh_files <- paste0(mf_bh_root, list.files(mf_bh_root)) %>%
-    .[grepl(ss, .) & grepl("meanfix", .) & !grepl("tar.gz", .)]
+                    .[grepl(ss, .) & grepl("meanfix", .) & !grepl(".tar.gz", .)]
   
   i_mf_bh <- lapply(mf_bh_files, readRDS) %>%
     do.call(rbind, .) %>%
